@@ -3,27 +3,18 @@ require_once(__DIR__."/../config/conexao.php");
 
     class chave
     {
-        private int     $id;
-        private string  $nome;
-        private string  $telefone;
-        private string  $endereco;
-        private int     $bairro;
-        private bool    $tipo_cliente;
+        private int  $id;
+        private int  $idVaga;
+        private int  $idVeiculo;
 
         public function __construct(
             int $id = 0,
-            string $nome,
-            string $telefone,
-            string $endereco,
-            int $bairro,
-            bool $tipo_cliente,)
+            int $idVaga,
+            int $idVeiculo,)
         {
-            $this->id           = $id;
-            $this->nome         = $nome;
-            $this->telefone     = $telefone;
-            $this->endereco     = $endereco;
-            $this->bairro       = $bairro;
-            $this->tipo_cliente = $tipo_cliente;
+            $this->id        = $id;
+            $this->idVaga    = $idVaga;
+            $this->idVeiculo = $idVeiculo;
         }
 
         public function __get(string $prop)
@@ -42,21 +33,11 @@ require_once(__DIR__."/../config/conexao.php");
                 case "id":
                     $this->id = (int)$valor;
                 break;
-                case "nome":
-                    $this->nome = strtoupper($valor);
+                case "idVaga":
+                    $this->idVaga = (int)$valor;
                 break;
-                case "telefone":
-                    $this->email = $valor;
-                break;
-                case "endereco":
-                    $this->senhaHash = password_hash($valor, PASSWORD_DEFAULT);
-                break;
-                case "bairro":
-                    $this->IDperfil = $valor;
-                break;
-                case "tipo_cliente":
-                    $this->ativo = (bool)$valor;
-                break;
+                case "idVeiculo":
+                    $this->idVeiculo = (int)$valor;
                 default:
                     throw new Exception("Propriedade {$prop} não permitida");
             }
@@ -70,8 +51,8 @@ require_once(__DIR__."/../config/conexao.php");
         {
             $pdo = self::getConexao();
 
-            $sql = " INSERT INTO `usuarios` (`nome`,`email`,`senha`,`ativo`, `id_perfil`)
-            VALUES (:nome, :email, :senha, :ativo, :IDperfil)";
+            $sql = " INSERT INTO `Chave` (`nome`,`email`,`senha`)
+            VALUES (:nome, :email, :senha)";
 
             $stmt= $pdo->prepare($sql);
 

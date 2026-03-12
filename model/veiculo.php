@@ -1,16 +1,16 @@
 <?php
 require_once(__DIR__ . "/../config/conexao.php");
 
-class Veiculo
+class veiculo
 {
-    private int $id_veiculo;
-    private ?int $id_vaga;        // pode ser nulo se ainda não alocado
-    private int $id_cliente;
-    private string $placa;
-    private string $cor;
-    private string $marca;
-    private string $modelo;
-    private string $tipo_veiculo;  // ENUM no BD
+    private ?int     $id_veiculo;
+    private ?int    $id_vaga;        // pode ser nulo se ainda não alocado
+    private int     $id_cliente;
+    private string  $placa;
+    private string  $cor;
+    private string  $marca;
+    private string  $modelo;
+    private string  $tipo_veiculo;  // ENUM no BD
     private ?string $hr_entrada;   // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
     private ?string $hr_saida;     // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
 
@@ -19,7 +19,7 @@ class Veiculo
     public ?array $vaga = null;    // opcional
 
     public function __construct(
-        int $id_veiculo = 0,
+        ?int $id_veiculo = 0,
         ?int $id_vaga = null,
         int $id_cliente = 0,
         string $placa = "",
@@ -73,7 +73,7 @@ class Veiculo
             SELECT COLUMN_TYPE
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = 'Veiculo'
+              AND TABLE_NAME = 'veiculo'
               AND COLUMN_NAME = 'tipo_veiculo'
         ");
 
@@ -100,74 +100,102 @@ class Veiculo
     }
 
     /* ===================== Inserir ===================== */
-    public function inserir(): int
-    {
-        if (!self::validarTipoVeiculo($this->tipo_veiculo)) {
-            throw new Exception("tipo_veiculo inválido para o ENUM.");
-        }
+    public static function inserir(
+    ?int   $id_vaga,
+    int    $id_cliente,
+    string $placa,
+    string $cor,
+    string $marca,
+    string $modelo,
+    string $tipo_veiculo,
+    ?string $hr_entrada = null,   // se vier null, usa NOW()
+    ?string $hr_saida = null
+): int
+{
+    if (!self::validarTipoVeiculo($tipo_veiculo)) {
+        throw new Exception("tipo_veiculo inválido para o ENUM.");
+    }
 
-        $pdo = self::getConexao();
+    $pdo = self::getConexao();
 
-        $sql = "INSERT INTO Veiculo
-                (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
-                VALUES
-                (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
+    // Se não informarem hr_entrada, define automaticamente
+    if ($hr_entrada === null) {
+        $hr_entrada = date('Y-m-d H:i:s');
+    }
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ":id_vaga"      => $this->id_vaga,
-            ":id_cliente"   => $this->id_cliente,
-            ":placa"        => $this->placa,
-            ":cor"          => $this->cor,
-            ":marca"        => $this->marca,
-            ":modelo"       => $this->modelo,
-            ":tipo_veiculo" => $this->tipo_veiculo,
-            ":hr_entrada"   => $this->hr_entrada,
-            ":hr_saida"     => $this->hr_saida
-        ]);
+    $sql = "INSERT INTO veiculo
+            (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
+            VALUES
+            (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
 
-        $id = (int)$pdo->lastInsertId();
-        if ($id <= 0) throw new Exception("Não foi possível inserir o veículo.");
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ":id_vaga"      => $id_vaga,
+        ":id_cliente"   => $id_cliente,
+        ":placa"        => $placa,
+        ":cor"          => $cor,
+        ":marca"        => $marca,
+        ":modelo"       => $modelo,
+        ":tipo_veiculo" => $tipo_veiculo,
+        ":hr_entrada"   => $hr_entrada,
+        ":hr_saida"     => $hr_saida
+    ]);
 
-        return $id;
+    $id = (int)$pdo->lastInsertId();
+    if ($id <= 0) {
+        throw new Exception("Não foi possível inserir o veículo.");
+    }
+
+    return $id;
     }
 
     /* ===================== Atualizar ===================== */
-    public function atualizar(): bool
+    public static function atualizar(
+    ?int    $id_veiculo,
+    ?int   $id_vaga,
+    int    $id_cliente,
+    string $placa,
+    string $cor,
+    string $marca,
+    string $modelo,
+    string $tipo_veiculo,
+    ?string $hr_entrada = null,
+    ?string $hr_saida = null
+    ): bool
     {
-        if (!self::validarTipoVeiculo($this->tipo_veiculo)) {
-            throw new Exception("tipo_veiculo inválido para o ENUM.");
-        }
+    if (!self::validarTipoVeiculo($tipo_veiculo)) {
+        throw new Exception("tipo_veiculo inválido para o ENUM.");
+    }
 
-        $pdo = self::getConexao();
+    $pdo = self::getConexao();
 
-        $sql = "UPDATE Veiculo SET
-                    id_vaga      = :id_vaga,
-                    id_cliente   = :id_cliente,
-                    placa        = :placa,
-                    cor          = :cor,
-                    marca        = :marca,
-                    modelo       = :modelo,
-                    tipo_veiculo = :tipo_veiculo,
-                    hr_entrada   = :hr_entrada,
-                    hr_saida     = :hr_saida
-                WHERE id_veiculo = :id_veiculo";
+    $sql = "UPDATE Veiculo SET
+                id_vaga      = :id_vaga,
+                id_cliente   = :id_cliente,
+                placa        = :placa,
+                cor          = :cor,
+                marca        = :marca,
+                modelo       = :modelo,
+                tipo_veiculo = :tipo_veiculo,
+                hr_entrada   = :hr_entrada,
+                hr_saida     = :hr_saida
+            WHERE id_veiculo = :id_veiculo";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ":id_vaga"      => $this->id_vaga,
-            ":id_cliente"   => $this->id_cliente,
-            ":placa"        => $this->placa,
-            ":cor"          => $this->cor,
-            ":marca"        => $this->marca,
-            ":modelo"       => $this->modelo,
-            ":tipo_veiculo" => $this->tipo_veiculo,
-            ":hr_entrada"   => $this->hr_entrada,
-            ":hr_saida"     => $this->hr_saida,
-            ":id_veiculo"   => $this->id_veiculo
-        ]);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ":id_vaga"      => $id_vaga,
+        ":id_cliente"   => $id_cliente,
+        ":placa"        => $placa,
+        ":cor"          => $cor,
+        ":marca"        => $marca,
+        ":modelo"       => $modelo,
+        ":tipo_veiculo" => $tipo_veiculo,
+        ":hr_entrada"   => $hr_entrada,
+        ":hr_saida"     => $hr_saida,
+        ":id_veiculo"   => $id_veiculo
+    ]);
 
-        return $stmt->rowCount() > 0;
+    return $stmt->rowCount() > 0;
     }
 
     /* ===================== Excluir (somente veículo) ===================== */
@@ -177,7 +205,7 @@ class Veiculo
 
         // Remove o veículo. Isso automaticamente "desvincula" do cliente,
         // porque o vínculo é o registro em Veiculo (FK id_cliente).
-        $sql = "DELETE FROM Veiculo WHERE id_veiculo = :id";
+        $sql = "DELETE FROM veiculo WHERE id_veiculo = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":id" => $id_veiculo]);
 
@@ -196,7 +224,7 @@ class Veiculo
                     c.nome      AS cliente_nome,
                     c.tipo_cliente,
                     c.telefone  AS cliente_telefone
-                FROM Veiculo v
+                FROM veiculo v
                 INNER JOIN Cliente c ON c.id_cliente = v.id_cliente
                 LEFT JOIN Vaga vg    ON vg.id_vaga = v.id_vaga
                 ORDER BY v.hr_entrada DESC, v.id_veiculo DESC";
@@ -212,7 +240,7 @@ class Veiculo
     }
 
     /* ============ Buscar por ID (veículo + cliente + vaga) ============ */
-    public static function buscarPorID(int $id_veiculo): ?Veiculo
+    public static function buscarPorID(int $id_veiculo): ?veiculo
     {
         $pdo = self::getConexao();
 
@@ -220,7 +248,7 @@ class Veiculo
                     v.*,
                     c.id_cliente, c.tipo_cliente, c.nome, c.telefone, c.endereco, c.bairro,
                     vg.id_vaga, vg.codigo_vaga, vg.disponibilidade
-                FROM Veiculo v
+                FROM veiculo v
                 INNER JOIN Cliente c ON c.id_cliente = v.id_cliente
                 LEFT JOIN Vaga vg    ON vg.id_vaga = v.id_vaga
                 WHERE v.id_veiculo = :id";
@@ -231,7 +259,7 @@ class Veiculo
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) return null;
 
-        $veic = new Veiculo(
+        $veic = new veiculo(
             id_veiculo:   (int)$row['id_veiculo'],
             id_vaga:      $row['id_vaga'] !== null ? (int)$row['id_vaga'] : null,
             id_cliente:   (int)$row['id_cliente'],
@@ -271,10 +299,28 @@ class Veiculo
     {
         $pdo = self::getConexao();
 
-        $sql = "SELECT * FROM Veiculo WHERE id_cliente = :id ORDER BY hr_entrada DESC";
+        $sql = "SELECT * FROM veiculo WHERE id_cliente = :id ORDER BY hr_entrada DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":id" => $id_cliente]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+}
+/* $veiculo2 = new Veiculo(
+    id_veiculo: 1,
+    id_vaga: 1, 
+    id_cliente: 1,
+    placa: "HTMZT4GU",   
+    cor: "vermelho",
+    marca: "peugeot",
+    modelo: "208",
+    tipo_veiculo: "carro",
+    hr_entrada: "2025-03-12 09:32:00",
+    hr_saida: $hr_saida
+); */
+
+try{
+    print_r(veiculo::inserir(1, 1, "HTMZT4GU", "vermelho", "peugeot", "208", 'carro', "2025-03-12 09:32:00", "2025-03-12 11:30:00")); 
+}catch(Exception $err){
+    echo $err->getMessage();
 }

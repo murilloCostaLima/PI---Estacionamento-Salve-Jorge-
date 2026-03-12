@@ -1,7 +1,7 @@
 <?php
 require_once(__DIR__."/../config/conexao.php");
 
-    class Vaga
+    class vaga
     {
         private int     $id_vaga;
         private int     $codigo_vaga;
@@ -74,38 +74,28 @@ require_once(__DIR__."/../config/conexao.php");
         {
             $pdo = self::getConexao();
 
-            $sql = "SELECT u.id_usuario,
-            u.nome,
-            u.email,
-            u.ativo,
-            u.id_perfil,
-            p.nome_perfil AS perfil_nivel 
-            FROM usuarios u
-            INNER JOIN perfis p
-            ON p.id_perfil = u.id_perfil
-            ORDER BY u.nome";
+            $sql = "SELECT v.id_vaga,
+            v.código_vaga, 
+            v.disponibilidade
+            FROM Vaga v 
+            ORDER BY v.código_vaga";
 
             $stmt = $pdo->query($sql);
 
-            $usuarios = [];
+            $vagas = [];
 
             while($row = $stmt->fetch(PDO::FETCH_ASSOC))
             {
-                $usuario = new usuario(
-                    id:        $row['id_usuario'],
-                    nome:      $row['nome'],
-                    email:     $row['email'],
-                    senhaHash: "",
-                    IDperfil:  $row['id_perfil'],
-                    ativo:     (bool)$row['ativo']
+                $vaga = new Vaga(
+                    id:        $row['id_vaga'],
+                    codigo_vaga:      $row['código_vaga'],
+                    disponibilidade:     (bool)$row['disponibilidade']
                 );
 
-                $usuario->perfilNome = $row['perfil_nivel'];
-
-                array_push($usuarios, $usuario);
+                array_push($vagas, $vaga);
             }
 
-            return $usuarios;
+            return $vagas;
         }
 
         public static function BuscarPorID(int $id)

@@ -1,7 +1,7 @@
 <?php
     require_once(__DIR__ . "/../config/conexao.php");
 
-class Cliente
+class cliente
 {
     private int     $id;
     private string  $nome;
@@ -148,4 +148,19 @@ class Cliente
         $stmt = $pdo->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }
+}
+
+$cliente1 = new cliente(
+    id: 1,  
+    nome: "Ana",      
+    telefone: "11987563744", 
+    endereco: "Rua Rio do Oeste",
+    bairro: "Itaquera", 
+    tipo_cliente: "Avulso" 
+);
+
+try{
+    print_r(cliente::inserir($cliente1)); 
+}catch(Exception $err){
+    echo $err->getMessage();
 }

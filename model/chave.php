@@ -1,7 +1,7 @@
 <?php
 require_once(__DIR__."/../config/conexao.php");
 
-    class Chave
+    class chave
     {
         private int  $id;
         private int  $idVaga;

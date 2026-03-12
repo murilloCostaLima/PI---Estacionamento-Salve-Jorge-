@@ -1,263 +1,280 @@
 <?php
-require_once(__DIR__."/../config/conexao.php");
+require_once(__DIR__ . "/../config/conexao.php");
 
-    class Veiculo
-    {
-        private int     $id_veiculo;
-        private int     $id_vaga;
-        private int     $id_cliente;
-        private string  $placa;
-        private string  $telefone;
-        private string  $endereco;
-        private int     $bairro;
-        private bool    $tipo_cliente;
+class Veiculo
+{
+    private int $id_veiculo;
+    private ?int $id_vaga;        // pode ser nulo se ainda não alocado
+    private int $id_cliente;
+    private string $placa;
+    private string $cor;
+    private string $marca;
+    private string $modelo;
+    private string $tipo_veiculo;  // ENUM no BD
+    private ?string $hr_entrada;   // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
+    private ?string $hr_saida;     // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
 
-        public function __construct(
-            int $id = 0,
-            string $nome,
-            string $telefone,
-            string $endereco,
-            int $bairro,
-            bool $tipo_cliente,)
-        {
-            $this->id           = $id;
-            $this->nome         = $nome;
-            $this->telefone     = $telefone;
-            $this->endereco     = $endereco;
-            $this->bairro       = $bairro;
-            $this->tipo_cliente = $tipo_cliente;
-        }
+    // Campos auxiliares para joins (não existem na tabela):
+    public ?array $cliente = null; // quando buscar com join
+    public ?array $vaga = null;    // opcional
 
-        public function __get(string $prop)
-        {
-            if(property_exists($this,$prop))
-            {
-                return $this->$prop;
-            }
-                throw new Exception("Propriedade {$prop} não existe");
-        }
-
-        public function __set(string $prop, $valor)
-        {
-            switch($prop)
-            {
-                case "id":
-                    $this->id = (int)$valor;
-                break;
-                case "nome":
-                    $this->nome = strtoupper($valor);
-                break;
-                case "telefone":
-                    $this->email = $valor;
-                break;
-                case "endereco":
-                    $this->senhaHash = password_hash($valor, PASSWORD_DEFAULT);
-                break;
-                case "bairro":
-                    $this->IDperfil = $valor;
-                break;
-                case "tipo_cliente":
-                    $this->ativo = (bool)$valor;
-                break;
-                default:
-                    throw new Exception("Propriedade {$prop} não permitida");
-            }
-        }
-        private static function getConexao()
-        {
-            return (new Conexao())->conexao();
-        }
-
-        public function inserir()
-        {
-            $pdo = self::getConexao();
-
-            $sql = " INSERT INTO `usuarios` (`nome`,`email`,`senha`,`ativo`, `id_perfil`)
-            VALUES (:nome, :email, :senha, :ativo, :IDperfil)";
-
-            $stmt= $pdo->prepare($sql);
-
-            $stmt->execute([
-                ':nome'     => $this->nome,
-                ':email'    => $this->email,
-                ':senha'    => $this->senhaHash,
-                ':ativo'    => $this->ativo,
-                ':IDperfil' => $this->IDperfil
-            ]);
-
-            $ultimoID = $pdo->lastInsertId();
-
-            if($ultimoID<=0)
-                {
-                    throw new Exception("Não foi Possível inserir o usuario");
-                }
-            return $ultimoID;
-        }
-        public static function listar()
-        {
-            $pdo = self::getConexao();
-
-            $sql = "SELECT u.id_usuario,
-            u.nome,
-            u.email,
-            u.ativo,
-            u.id_perfil,
-            p.nome_perfil AS perfil_nivel 
-            FROM usuarios u
-            INNER JOIN perfis p
-            ON p.id_perfil = u.id_perfil
-            ORDER BY u.nome";
-
-            $stmt = $pdo->query($sql);
-
-            $usuarios = [];
-
-            while($row = $stmt->fetch(PDO::FETCH_ASSOC))
-            {
-                $usuario = new usuario(
-                    id:        $row['id_usuario'],
-                    nome:      $row['nome'],
-                    email:     $row['email'],
-                    senhaHash: "",
-                    IDperfil:  $row['id_perfil'],
-                    ativo:     (bool)$row['ativo']
-                );
-
-                $usuario->perfilNome = $row['perfil_nivel'];
-
-                array_push($usuarios, $usuario);
-            }
-
-            return $usuarios;
-        }
-
-        public static function BuscarPorID(int $id)
-        {
-            $pdo = self::getConexao();
-
-            $sql = "SELECT u.id_usuario,
-            u.nome,
-            u.email,
-            u.ativo,
-            u.id_perfil,
-            p.nome_perfil AS perfil_nivel 
-            FROM usuarios u
-            INNER JOIN perfis p
-            ON p.id_perfil = u.id_perfil
-            WHERE u.id_usuario = :id";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([':id'=>$id]);
-
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if(!$row)
-                {
-                    new Exception("ID de Usuario não Existe. Tente Outro ou, Adicione um usuário com este respectivo ID.");
-                    return null;
-                }
-
-            $usuario = new usuario(
-                id:        $row['id_usuario'],
-                nome:      $row['nome'],
-                email:     $row['email'],
-                senhaHash: "",
-                IDperfil:  $row['id_perfil'],
-                ativo:     (bool)$row['ativo']
-            );
-
-            $usuario->perfilNome = $row['perfil_nivel'];
-
-            return $usuario;
-        }
-
-         public static function BuscarPorEmail(string $email)
-        {
-            $pdo = self::getConexao();
-
-            $sql = "SELECT u.id_usuario,
-            u.nome,
-            u.email,
-            u.ativo,
-            u.id_perfil,
-            p.nome_perfil AS perfil_nivel 
-            FROM usuarios AS u
-            INNER JOIN perfis p
-            ON p.id_perfil = u.id_perfil
-            WHERE u.email = :email";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([':email'=>$email]);
-
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if(!$row)
-                {
-                    new Exception("Email de Usuario não Existe. Tente Outro ou, Adicione um usuário com este respectivo Email.");
-                    return null;
-                }
-
-            $usuario = new usuario(
-                id:        $row['id_usuario'],
-                nome:      $row['nome'],
-                email:     $row['email'],
-                senhaHash: "",
-                IDperfil:  $row['id_perfil'],
-                ativo:     (bool)$row['ativo']
-            );
-
-            $usuario->email = $row['perfil_nivel'];
-
-            return $usuario;
-        }
-
-        public static function excluir(int $id)
-        {
-            $pdo = self::getConexao();
-            $stmt1 = $pdo->prepare("DELETE FROM `Chave` WHERE `id_veiculo` = ?");
-            $stmt1->execute([$this->id]);
-
-            $stmt2 = $pdo->prepare("DELETE FROM `Veiculo` WHERE `id_veiculo` = ?");
-            return $stmt2->execute($this->id);
-
-
-            // $sql = "DELETE FROM `usuarios` WHERE `id` = :id";
-            // $stmt = $pdo->prepare($sql);
-
-            // $stmt->execute([':id'=>$id]);
-
-            // return $stmt;
-
-            // if($stmt->rowCount()===0)
-            //     {
-            //         return false;
-            //     }
-            // return true;
-        }
-
-        public function atualizar()
-        {
-            $pdo = self::getConexao();
-
-            $sql = "UPDATE `usuarios` SET `nome` = :nome, `email` = :email,
-            `ativo`=:ativo, `id_perfil`=:perfil WHERE `id_usuario`:=id";
-
-            $stmt = $pdo->prepare($sql);
-
-            $stmt->execute([
-                ':nome'     => $this->nome,
-                ':email'    => $this->email,
-                ':senha'    => $this->senhaHash,
-                ':ativo'    => $this->ativo,
-                ':IDperfil' => $this->IDperfil]);
-
-            if($stmt->rowCount()===0)
-                {
-                    return false;
-                }
-            return true;
-        }
+    public function __construct(
+        int $id_veiculo = 0,
+        ?int $id_vaga = null,
+        int $id_cliente = 0,
+        string $placa = "",
+        string $cor = "",
+        string $marca = "",
+        string $modelo = "",
+        string $tipo_veiculo = "",
+        ?string $hr_entrada = null,
+        ?string $hr_saida = null
+    ) {
+        $this->id_veiculo   = $id_veiculo;
+        $this->id_vaga      = $id_vaga;
+        $this->id_cliente   = $id_cliente;
+        $this->placa        = $placa;
+        $this->cor          = $cor;
+        $this->marca        = $marca;
+        $this->modelo       = $modelo;
+        $this->tipo_veiculo = $tipo_veiculo;
+        $this->hr_entrada   = $hr_entrada;
+        $this->hr_saida     = $hr_saida;
     }
-    // echo "<pre>";
-    // print_r(Usuario::excluir(3)); 
-?>
+
+    public function __get($prop)
+    {
+        if (property_exists($this, $prop)) return $this->$prop;
+        throw new Exception("Propriedade {$prop} não existe.");
+    }
+
+    public function __set($prop, $valor)
+    {
+        if (property_exists($this, $prop)) { $this->$prop = $valor; return; }
+        throw new Exception("Propriedade {$prop} não permitida.");
+    }
+
+    /* ===================== Conexão ===================== */
+    private static function getConexao()
+    {
+        return (new Conexao())->conexao();
+    }
+
+    /* =============== Util: ENUM de tipo_veiculo =============== 
+       Busca os valores possíveis do ENUM direto do INFORMATION_SCHEMA.
+       Se preferir, troque por um array fixo, ex.: return ['CARRO','MOTO',...];
+    */
+    public static function obterOpcoesTipoVeiculo(): array
+    {
+        $pdo = self::getConexao();
+
+        // Ajuste o nome do BD se seu schema não for o database atual de conexão:
+        $stmt = $pdo->query("
+            SELECT COLUMN_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'Veiculo'
+              AND COLUMN_NAME = 'tipo_veiculo'
+        ");
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row || empty($row['COLUMN_TYPE'])) return [];
+
+        // Ex.: "enum('CARRO','MOTO','CAMINHONETE')" -> ['CARRO','MOTO','CAMINHONETE']
+        $enum = $row['COLUMN_TYPE'];
+        preg_match("/^enum\((.*)\)$/i", $enum, $matches);
+        if (!isset($matches[1])) return [];
+
+        $vals = array_map(function($v){
+            return trim($v, " '");
+        }, explode(',', $matches[1]));
+
+        return $vals;
+    }
+
+    private static function validarTipoVeiculo(string $tipo): bool
+    {
+        $opcoes = self::obterOpcoesTipoVeiculo();
+        if (empty($opcoes)) return true; // fallback: não validar se não conseguir ler
+        return in_array($tipo, $opcoes, true);
+    }
+
+    /* ===================== Inserir ===================== */
+    public function inserir(): int
+    {
+        if (!self::validarTipoVeiculo($this->tipo_veiculo)) {
+            throw new Exception("tipo_veiculo inválido para o ENUM.");
+        }
+
+        $pdo = self::getConexao();
+
+        $sql = "INSERT INTO Veiculo
+                (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
+                VALUES
+                (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ":id_vaga"      => $this->id_vaga,
+            ":id_cliente"   => $this->id_cliente,
+            ":placa"        => $this->placa,
+            ":cor"          => $this->cor,
+            ":marca"        => $this->marca,
+            ":modelo"       => $this->modelo,
+            ":tipo_veiculo" => $this->tipo_veiculo,
+            ":hr_entrada"   => $this->hr_entrada,
+            ":hr_saida"     => $this->hr_saida
+        ]);
+
+        $id = (int)$pdo->lastInsertId();
+        if ($id <= 0) throw new Exception("Não foi possível inserir o veículo.");
+
+        return $id;
+    }
+
+    /* ===================== Atualizar ===================== */
+    public function atualizar(): bool
+    {
+        if (!self::validarTipoVeiculo($this->tipo_veiculo)) {
+            throw new Exception("tipo_veiculo inválido para o ENUM.");
+        }
+
+        $pdo = self::getConexao();
+
+        $sql = "UPDATE Veiculo SET
+                    id_vaga      = :id_vaga,
+                    id_cliente   = :id_cliente,
+                    placa        = :placa,
+                    cor          = :cor,
+                    marca        = :marca,
+                    modelo       = :modelo,
+                    tipo_veiculo = :tipo_veiculo,
+                    hr_entrada   = :hr_entrada,
+                    hr_saida     = :hr_saida
+                WHERE id_veiculo = :id_veiculo";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ":id_vaga"      => $this->id_vaga,
+            ":id_cliente"   => $this->id_cliente,
+            ":placa"        => $this->placa,
+            ":cor"          => $this->cor,
+            ":marca"        => $this->marca,
+            ":modelo"       => $this->modelo,
+            ":tipo_veiculo" => $this->tipo_veiculo,
+            ":hr_entrada"   => $this->hr_entrada,
+            ":hr_saida"     => $this->hr_saida,
+            ":id_veiculo"   => $this->id_veiculo
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /* ===================== Excluir (somente veículo) ===================== */
+    public static function excluir(int $id_veiculo): bool
+    {
+        $pdo = self::getConexao();
+
+        // Remove o veículo. Isso automaticamente "desvincula" do cliente,
+        // porque o vínculo é o registro em Veiculo (FK id_cliente).
+        $sql = "DELETE FROM Veiculo WHERE id_veiculo = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([":id" => $id_veiculo]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /* ===================== Listar (para HTML) ===================== 
+       Ideal para a lista da sua View: traz info do cliente junto.
+    */
+    public static function listar(): array
+    {
+        $pdo = self::getConexao();
+
+        $sql = "SELECT 
+                    v.*,
+                    c.nome      AS cliente_nome,
+                    c.tipo_cliente,
+                    c.telefone  AS cliente_telefone
+                FROM Veiculo v
+                INNER JOIN Cliente c ON c.id_cliente = v.id_cliente
+                LEFT JOIN Vaga vg    ON vg.id_vaga = v.id_vaga
+                ORDER BY v.hr_entrada DESC, v.id_veiculo DESC";
+
+        $stmt = $pdo->query($sql);
+        $dados = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $dados[] = $row; // pode montar objetos, mas para View é prático array assoc
+        }
+
+        return $dados;
+    }
+
+    /* ============ Buscar por ID (veículo + cliente + vaga) ============ */
+    public static function buscarPorID(int $id_veiculo): ?Veiculo
+    {
+        $pdo = self::getConexao();
+
+        $sql = "SELECT 
+                    v.*,
+                    c.id_cliente, c.tipo_cliente, c.nome, c.telefone, c.endereco, c.bairro,
+                    vg.id_vaga, vg.codigo_vaga, vg.disponibilidade
+                FROM Veiculo v
+                INNER JOIN Cliente c ON c.id_cliente = v.id_cliente
+                LEFT JOIN Vaga vg    ON vg.id_vaga = v.id_vaga
+                WHERE v.id_veiculo = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([":id" => $id_veiculo]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return null;
+
+        $veic = new Veiculo(
+            id_veiculo:   (int)$row['id_veiculo'],
+            id_vaga:      $row['id_vaga'] !== null ? (int)$row['id_vaga'] : null,
+            id_cliente:   (int)$row['id_cliente'],
+            placa:        $row['placa'],
+            cor:          $row['cor'],
+            marca:        $row['marca'],
+            modelo:       $row['modelo'],
+            tipo_veiculo: $row['tipo_veiculo'],
+            hr_entrada:   $row['hr_entrada'],
+            hr_saida:     $row['hr_saida']
+        );
+
+        // Dados do cliente agregados
+        $veic->cliente = [
+            "id_cliente"   => (int)$row['id_cliente'],
+            "tipo_cliente" => $row['tipo_cliente'],
+            "nome"         => $row['nome'],
+            "telefone"     => $row['telefone'],
+            "endereco"     => $row['endereco'],
+            "bairro"       => $row['bairro']
+        ];
+
+        // Dados da vaga (se houver)
+        if (!empty($row['codigo_vaga'])) {
+            $veic->vaga = [
+                "id_vaga"        => (int)$row['id_vaga'],
+                "codigo_vaga"    => $row['codigo_vaga'],
+                "disponibilidade"=> $row['disponibilidade']
+            ];
+        }
+
+        return $veic;
+    }
+
+    /* ============ Listar veículos por cliente (para formulário do cliente) ============ */
+    public static function listarPorCliente(int $id_cliente): array
+    {
+        $pdo = self::getConexao();
+
+        $sql = "SELECT * FROM Veiculo WHERE id_cliente = :id ORDER BY hr_entrada DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([":id" => $id_cliente]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}

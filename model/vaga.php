@@ -3,27 +3,18 @@ require_once(__DIR__."/../config/conexao.php");
 
     class Vaga
     {
-        private int     $id;
-        private string  $nome;
-        private string  $telefone;
-        private string  $endereco;
-        private int     $bairro;
-        private bool    $tipo_cliente;
+        private int     $id_vaga;
+        private int     $codigo_vaga;
+        private bool    $disponibilidade;
 
         public function __construct(
-            int $id = 0,
-            string $nome,
-            string $telefone,
-            string $endereco,
-            int $bairro,
-            bool $tipo_cliente,)
+            int $id_vaga = 0,
+            int $codigo_vaga,
+            bool $disponibilidade,)
         {
-            $this->id           = $id;
-            $this->nome         = $nome;
-            $this->telefone     = $telefone;
-            $this->endereco     = $endereco;
-            $this->bairro       = $bairro;
-            $this->tipo_cliente = $tipo_cliente;
+            $this->id_vaga             = $id_vaga;
+            $this->codigo_vaga         = $codigo_vaga;
+            $this->disponibilidade     = $disponibilidade;
         }
 
         public function __get(string $prop)
@@ -39,23 +30,14 @@ require_once(__DIR__."/../config/conexao.php");
         {
             switch($prop)
             {
-                case "id":
-                    $this->id = (int)$valor;
+                case "id_vaga":
+                    $this->id_vaga = (int)$valor;
                 break;
-                case "nome":
-                    $this->nome = strtoupper($valor);
+                case "codigo_vaga":
+                    $this->codigo_vaga = (int)$valor;
                 break;
-                case "telefone":
-                    $this->email = $valor;
-                break;
-                case "endereco":
-                    $this->senhaHash = password_hash($valor, PASSWORD_DEFAULT);
-                break;
-                case "bairro":
-                    $this->IDperfil = $valor;
-                break;
-                case "tipo_cliente":
-                    $this->ativo = (bool)$valor;
+                case "disponibilidade":
+                    $this->disponibilidade = (bool)$valor;
                 break;
                 default:
                     throw new Exception("Propriedade {$prop} não permitida");
@@ -70,24 +52,21 @@ require_once(__DIR__."/../config/conexao.php");
         {
             $pdo = self::getConexao();
 
-            $sql = " INSERT INTO `usuarios` (`nome`,`email`,`senha`,`ativo`, `id_perfil`)
-            VALUES (:nome, :email, :senha, :ativo, :IDperfil)";
+            $sql = " INSERT INTO `Vaga` (`codigo_vaga`, `disponibilidade`)
+            VALUES (:codigo_vaga, :disponibilidade)";
 
             $stmt= $pdo->prepare($sql);
 
             $stmt->execute([
-                ':nome'     => $this->nome,
-                ':email'    => $this->email,
-                ':senha'    => $this->senhaHash,
-                ':ativo'    => $this->ativo,
-                ':IDperfil' => $this->IDperfil
+                ':codigo_vaga'     => $this->codigo_vaga,
+                ':disponibilidade'    => $this->disponibilidade,
             ]);
 
             $ultimoID = $pdo->lastInsertId();
 
             if($ultimoID<=0)
                 {
-                    throw new Exception("Não foi Possível inserir o usuario");
+                    throw new Exception("Não foi Possível inserir a vaga");
                 }
             return $ultimoID;
         }

@@ -1,10 +1,12 @@
 <?php
 require_once(__DIR__."/../config/conexao.php");
 
-    class veiculo
+    class Veiculo
     {
-        private int     $id;
-        private string  $nome;
+        private int     $id_veiculo;
+        private int     $id_vaga;
+        private int     $id_cliente;
+        private string  $placa;
         private string  $telefone;
         private string  $endereco;
         private int     $bairro;
@@ -212,18 +214,25 @@ require_once(__DIR__."/../config/conexao.php");
         public static function excluir(int $id)
         {
             $pdo = self::getConexao();
-            $sql = "DELETE FROM `usuarios` WHERE `id` = :id";
-            $stmt = $pdo->prepare($sql);
+            $stmt1 = $pdo->prepare("DELETE FROM `Chave` WHERE `id_veiculo` = ?");
+            $stmt1->execute([$this->id]);
 
-            $stmt->execute([':id'=>$id]);
+            $stmt2 = $pdo->prepare("DELETE FROM `Veiculo` WHERE `id_veiculo` = ?");
+            return $stmt2->execute($this->id);
 
-            return $stmt;
 
-            if($stmt->rowCount()===0)
-                {
-                    return false;
-                }
-            return true;
+            // $sql = "DELETE FROM `usuarios` WHERE `id` = :id";
+            // $stmt = $pdo->prepare($sql);
+
+            // $stmt->execute([':id'=>$id]);
+
+            // return $stmt;
+
+            // if($stmt->rowCount()===0)
+            //     {
+            //         return false;
+            //     }
+            // return true;
         }
 
         public function atualizar()

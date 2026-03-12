@@ -1,7 +1,7 @@
 <?php
 require_once(__DIR__."/../config/conexao.php");
 
-    class vaga
+    class Vaga
     {
         private int     $id;
         private string  $nome;

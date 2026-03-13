@@ -10,7 +10,7 @@ class veiculo
     private string  $cor;
     private string  $marca;
     private string  $modelo;
-    private string  $tipo_veiculo;  // ENUM no BD
+    private bool  $tipo_veiculo;  // ENUM no BD
     private ?string $hr_entrada;   // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
     private ?string $hr_saida;     // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
 
@@ -26,7 +26,7 @@ class veiculo
         string $cor = "",
         string $marca = "",
         string $modelo = "",
-        string $tipo_veiculo = "",
+        bool $tipo_veiculo = false,
         ?string $hr_entrada = null,
         ?string $hr_saida = null
     ) {
@@ -101,101 +101,101 @@ class veiculo
 
     /* ===================== Inserir ===================== */
     public static function inserir(
-    ?int   $id_vaga,
-    int    $id_cliente,
-    string $placa,
-    string $cor,
-    string $marca,
-    string $modelo,
-    string $tipo_veiculo,
-    ?string $hr_entrada = null,   // se vier null, usa NOW()
-    ?string $hr_saida = null
-): int
-{
-    if (!self::validarTipoVeiculo($tipo_veiculo)) {
-        throw new Exception("tipo_veiculo inválido para o ENUM.");
-    }
+        ?int   $id_vaga,
+        int    $id_cliente,
+        string $placa,
+        string $cor,
+        string $marca,
+        string $modelo,
+        string $tipo_veiculo,
+        ?string $hr_entrada = null,   // se vier null, usa NOW()
+        ?string $hr_saida = null
+    ): int
+    {
+        if (!self::validarTipoVeiculo($tipo_veiculo)) {
+            throw new Exception("tipo_veiculo inválido para o ENUM.");
+        }
 
-    $pdo = self::getConexao();
+        $pdo = self::getConexao();
 
-    // Se não informarem hr_entrada, define automaticamente
-    if ($hr_entrada === null) {
-        $hr_entrada = date('Y-m-d H:i:s');
-    }
+        // Se não informarem hr_entrada, define automaticamente
+        if ($hr_entrada === null) {
+            $hr_entrada = date('Y-m-d H:i:s');
+        }
 
-    $sql = "INSERT INTO veiculo
-            (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
-            VALUES
-            (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
+        $sql = "INSERT INTO veiculo
+                (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
+                VALUES
+                (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ":id_vaga"      => $id_vaga,
-        ":id_cliente"   => $id_cliente,
-        ":placa"        => $placa,
-        ":cor"          => $cor,
-        ":marca"        => $marca,
-        ":modelo"       => $modelo,
-        ":tipo_veiculo" => $tipo_veiculo,
-        ":hr_entrada"   => $hr_entrada,
-        ":hr_saida"     => $hr_saida
-    ]);
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ":id_vaga"      => $id_vaga,
+            ":id_cliente"   => $id_cliente,
+            ":placa"        => $placa,
+            ":cor"          => $cor,
+            ":marca"        => $marca,
+            ":modelo"       => $modelo,
+            ":tipo_veiculo" => $tipo_veiculo,
+            ":hr_entrada"   => $hr_entrada,
+            ":hr_saida"     => $hr_saida
+        ]);
 
-    $id = (int)$pdo->lastInsertId();
-    if ($id <= 0) {
-        throw new Exception("Não foi possível inserir o veículo.");
-    }
+        $id = (int)$pdo->lastInsertId();
+        if ($id <= 0) {
+            throw new Exception("Não foi possível inserir o veículo.");
+        }
 
-    return $id;
+        return $id;
     }
 
     /* ===================== Atualizar ===================== */
     public static function atualizar(
-    ?int    $id_veiculo,
-    ?int   $id_vaga,
-    int    $id_cliente,
-    string $placa,
-    string $cor,
-    string $marca,
-    string $modelo,
-    string $tipo_veiculo,
-    ?string $hr_entrada = null,
-    ?string $hr_saida = null
+        ?int    $id_veiculo,
+        ?int   $id_vaga,
+        int    $id_cliente,
+        string $placa,
+        string $cor,
+        string $marca,
+        string $modelo,
+        string $tipo_veiculo,
+        ?string $hr_entrada = null,
+        ?string $hr_saida = null
     ): bool
     {
-    if (!self::validarTipoVeiculo($tipo_veiculo)) {
-        throw new Exception("tipo_veiculo inválido para o ENUM.");
-    }
+        if (!self::validarTipoVeiculo($tipo_veiculo)) {
+            throw new Exception("tipo_veiculo inválido para o ENUM.");
+        }
 
-    $pdo = self::getConexao();
+        $pdo = self::getConexao();
 
-    $sql = "UPDATE Veiculo SET
-                id_vaga      = :id_vaga,
-                id_cliente   = :id_cliente,
-                placa        = :placa,
-                cor          = :cor,
-                marca        = :marca,
-                modelo       = :modelo,
-                tipo_veiculo = :tipo_veiculo,
-                hr_entrada   = :hr_entrada,
-                hr_saida     = :hr_saida
-            WHERE id_veiculo = :id_veiculo";
+        $sql = "UPDATE Veiculo SET
+                    id_vaga      = :id_vaga,
+                    id_cliente   = :id_cliente,
+                    placa        = :placa,
+                    cor          = :cor,
+                    marca        = :marca,
+                    modelo       = :modelo,
+                    tipo_veiculo = :tipo_veiculo,
+                    hr_entrada   = :hr_entrada,
+                    hr_saida     = :hr_saida
+                WHERE id_veiculo = :id_veiculo";
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ":id_vaga"      => $id_vaga,
-        ":id_cliente"   => $id_cliente,
-        ":placa"        => $placa,
-        ":cor"          => $cor,
-        ":marca"        => $marca,
-        ":modelo"       => $modelo,
-        ":tipo_veiculo" => $tipo_veiculo,
-        ":hr_entrada"   => $hr_entrada,
-        ":hr_saida"     => $hr_saida,
-        ":id_veiculo"   => $id_veiculo
-    ]);
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ":id_vaga"      => $id_vaga,
+            ":id_cliente"   => $id_cliente,
+            ":placa"        => $placa,
+            ":cor"          => $cor,
+            ":marca"        => $marca,
+            ":modelo"       => $modelo,
+            ":tipo_veiculo" => $tipo_veiculo,
+            ":hr_entrada"   => $hr_entrada,
+            ":hr_saida"     => $hr_saida,
+            ":id_veiculo"   => $id_veiculo
+        ]);
 
-    return $stmt->rowCount() > 0;
+        return $stmt->rowCount() > 0;
     }
 
     /* ===================== Excluir (somente veículo) ===================== */
@@ -225,8 +225,8 @@ class veiculo
                     c.tipo_cliente,
                     c.telefone  AS cliente_telefone
                 FROM veiculo v
-                INNER JOIN Cliente c ON c.id_cliente = v.id_cliente
-                LEFT JOIN Vaga vg    ON vg.id_vaga = v.id_vaga
+                INNER JOIN cliente c ON c.id_cliente = v.id_cliente
+                LEFT JOIN vaga vg    ON vg.id_vaga = v.id_vaga
                 ORDER BY v.hr_entrada DESC, v.id_veiculo DESC";
 
         $stmt = $pdo->query($sql);
@@ -249,8 +249,8 @@ class veiculo
                     c.id_cliente, c.tipo_cliente, c.nome, c.telefone, c.endereco, c.bairro,
                     vg.id_vaga, vg.codigo_vaga, vg.disponibilidade
                 FROM veiculo v
-                INNER JOIN Cliente c ON c.id_cliente = v.id_cliente
-                LEFT JOIN Vaga vg    ON vg.id_vaga = v.id_vaga
+                INNER JOIN cliente c ON c.id_cliente = v.id_cliente
+                LEFT JOIN vaga vg    ON vg.id_vaga = v.id_vaga
                 WHERE v.id_veiculo = :id";
 
         $stmt = $pdo->prepare($sql);
@@ -320,7 +320,7 @@ class veiculo
 ); */
 
 try{
-    print_r(veiculo::inserir(1, 1, 1, "HTMZT4U", "vermelho", "peugeot", "208", 'carro', "2025-03-12 09:32:00", "2025-03-12 11:30:00")); 
+    print_r(veiculo::excluir(2)); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

@@ -1,165 +1,178 @@
 <?php
 require_once(__DIR__."/../config/conexao.php");
-
-    class vaga
+ 
+class vaga
+{
+    private int $id_vaga;
+    private int $codigo_vaga;
+    private string $disponibilidade; // ENUM('disponível','ocupada')
+ 
+    public function __construct(
+        int $id_vaga = 0,
+        int $codigo_vaga,
+        string $disponibilidade = "disponível")
     {
-        private int     $id_vaga;
-        private int     $codigo_vaga;
-        private bool    $disponibilidade;
+        $this->id_vaga        = $id_vaga;
+        $this->codigo_vaga    = $codigo_vaga;
+        $this->disponibilidade = $disponibilidade;
+    }
+ 
+    private static function getConexao()
+    {
+        return (new Conexao())->conexao();
+    }
+ 
+    /* =====================================================
+       1. NÃO PERMITIR MAIS QUE 90 VAGAS
+    ====================================================== */
+    public static function inserir(string $codigoVaga, bool $disponibilidade): string
+    {
+        $pdo = self::getConexao();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        public function __construct(
-            int $id_vaga = 0,
-            int $codigo_vaga,
-            bool $disponibilidade,
-        ){
-            $this->id_vaga             = $id_vaga;
-            $this->codigo_vaga         = $codigo_vaga;
-            $this->disponibilidade     = $disponibilidade;
-        }
-
-        public function __get(string $prop)
+        try
         {
-            if(property_exists($this,$prop))
+            // Sempre começa transação
+            $pdo->beginTransaction();
+
+            // Verifica quantas vagas já existem
+            $stmtCount = $pdo->query("SELECT COUNT(*) AS total FROM vaga FOR UPDATE");
+            $count = (int) $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
+
+            if ($count >= 90)
             {
-                return $this->$prop;
-            }
-                throw new Exception("Propriedade {$prop} não existe");
-        }
-
-        public function __set(string $prop, $valor)
-        {
-            switch($prop)
-            {
-                case "id_vaga":
-                    $this->id_vaga = (int)$valor;
-                break;
-                case "codigo_vaga":
-                    $this->codigo_vaga = (int)$valor;
-                break;
-                case "disponibilidade":
-                    $this->disponibilidade = (bool)$valor;
-                break;
-                default:
-                    throw new Exception("Propriedade {$prop} não permitida");
-            }
-        }
-        private static function getConexao()
-        {
-            return (new Conexao())->conexao();
-        }
-
-        public function inserir()
-        {
-            $pdo = self::getConexao();
-
-            $sql = " INSERT INTO `Vaga` (`codigo_vaga`, `disponibilidade`)
-            VALUES (:codigo_vaga, :disponibilidade)";
-
-            $stmt= $pdo->prepare($sql);
-
-            $stmt->execute([
-                ':codigo_vaga'     => $this->codigo_vaga,
-                ':disponibilidade'    => $this->disponibilidade,
-            ]);
-
-            $ultimoID = $pdo->lastInsertId();
-
-            if($ultimoID<=0)
-                {
-                    throw new Exception("Não foi Possível inserir a vaga");
-                }
-            return $ultimoID;
-        }
-        public static function listar()
-        {
-            $pdo = self::getConexao();
-
-            $sql = "SELECT v.id_vaga,
-            v.codigo_vaga, 
-            v.disponibilidade
-            FROM vaga v 
-            ORDER BY v.codigo_vaga";
-
-            $stmt = $pdo->query($sql);
-
-            $vagas = [];
-
-            while($row = $stmt->fetch(PDO::FETCH_ASSOC))
-            {
-                $vaga = new vaga(
-                    id_vaga:            $row['id_vaga'],
-                    codigo_vaga:        $row['codigo_vaga'],
-                    disponibilidade:    (bool)$row['disponibilidade']
-                );
-
-                array_push($vagas, $vaga);
+                // Cancela transação e lança erro
+                $pdo->rollBack();
+                throw new Exception("O estacionamento já possui o máximo de 90 vagas.");
             }
 
-            return $vagas;
-        }
-
-        public static function BuscarPorID(int $id)
-        {
-            $pdo = self::getConexao();
-
-            $sql = "SELECT v.id_vaga,
-            v.codigo_vaga, 
-            v.disponibilidade
-            FROM vaga v 
-            WHERE v.id_vaga = :id";
+            // Insere a nova vaga
+            $sql = "INSERT INTO vaga (codigo_vaga, disponibilidade)
+                    VALUES (:codigo, :disp)";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':id'=>$id]);
+            $stmt->bindValue(':codigo', $codigoVaga);
+            $stmt->bindValue(':disp',   $disponibilidade, PDO::PARAM_BOOL);
 
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->execute();
 
-            if(!$row)
-                {
-                    new Exception("ID da vaga não Existe. Tente Outro ou, Adicione um usuário com este respectivo ID.");
-                    return null;
-                }
+            // Finaliza a transação
+            $pdo->commit();
 
-            $vaga = new vaga(
-                id_vaga:             $row['id_vaga'],
-                codigo_vaga:         $row['codigo_vaga'],
-                disponibilidade:     (bool)$row['disponibilidade']
-            );
+            return $pdo->lastInsertId();
 
-            return $vaga;
-        }
-
-        public static function excluir(int $id)
+        }  
+        catch (Throwable $e)
         {
-            $pdo = self::getConexao();
 
-            $sql = "DELETE FROM vaga WHERE id_vaga = :id";
-            $stmt = $pdo->prepare($sql);
+            if ($pdo->inTransaction())
+            {
+                $pdo->rollBack();
+            }
 
-            $stmt->execute([':id'=>$id]);
-
-            return $stmt->rowCount() > 0;
-        }
-
-        public function atualizar()
-        {
-            $pdo = self::getConexao();
-
-            $sql = "UPDATE `vaga` SET `codigo_vaga` = :codigo_vaga, 
-                `disponibilidade` = :disponibilidade WHERE `id_vaga` = :id";
-
-            $stmt = $pdo->prepare($sql);
-
-            $stmt->execute([
-                ':codigo_vaga'        => $this->codigo_vaga,
-                ':disponibilidade'    => $this->disponibilidade ]);
-
-            if($stmt->rowCount()===0)
-                {
-                    return false;
-                }
-            return true;
+            throw new Exception("Erro ao inserir vaga: " . $e->getMessage(), 0, $e);
         }
     }
-    // echo "<pre>";
-    // print_r(Usuario::excluir(3)); 
+ 
+    /* =====================================================
+       2. LISTAR TODAS AS VAGAS
+    ====================================================== */
+    public static function listar()
+    {
+        $pdo = self::getConexao();
+        $stmt = $pdo->query("SELECT * FROM vaga ORDER BY codigo_vaga ASC");
+ 
+        $vagas = [];
+ 
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $vagas[] = new vaga(
+                id_vaga:        $row['id_vaga'],
+                codigo_vaga:    $row['codigo_vaga'],
+                disponibilidade: $row['disponibilidade']
+            );
+        }
+        return $vagas;
+    }
+ 
+    /* =====================================================
+       3. BUSCAR VAGA POR ID
+    ====================================================== */
+    public static function buscarPorID(int $id)
+    {
+        $pdo = self::getConexao();
+ 
+        $stmt = $pdo->prepare("SELECT * FROM vaga WHERE id_vaga = :id");
+        $stmt->execute([":id" => $id]);
+ 
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+ 
+        if (!$row) return null;
+ 
+        return new vaga(
+            id_vaga:         $row['id_vaga'],
+            codigo_vaga:     $row['codigo_vaga'],
+            disponibilidade: $row['disponibilidade']
+        );
+    }
+ 
+    /* =====================================================
+       4. OCUPAR VAGA AO INSERIR VEÍCULO
+          - Regras importantes aqui!
+    ====================================================== */
+    public static function ocuparVaga(int $codigoVaga, string $tipoVeiculo, string $tipoCliente)
+    {
+        $pdo = self::getConexao();
+ 
+        // Regra: vagas 85–90 apenas motos
+        if ($codigoVaga >= 85 && $codigoVaga <= 90 && $tipoVeiculo !== "moto") {
+            throw new Exception("As vagas de 85 a 90 são exclusivas para motos.");
+        }
+ 
+        // Verifica disponibilidade
+        $sql = "SELECT disponibilidade FROM vaga WHERE codigo_vaga = :cod";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([":cod" => $codigoVaga]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+ 
+        if (!$row) {
+            throw new Exception("Vaga não encontrada.");
+        }
+ 
+        if ($row["disponibilidade"] === "ocupada") {
+            throw new Exception("A vaga já está ocupada.");
+        }
+ 
+        // Ocupa a vaga
+        $sql = "UPDATE vaga SET disponibilidade = 'ocupada' WHERE codigo_vaga = :cod";
+ 
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([":cod" => $codigoVaga]);
+ 
+        return true;
+    }
+ 
+    /* =====================================================
+       5. LIBERAR VAGA
+          - Somente avulso
+    ====================================================== */
+    public static function liberarVaga(int $codigoVaga, string $tipoCliente)
+    {
+        if ($tipoCliente === "mensal") {
+            throw new Exception("Clientes mensais não liberam vaga (vaga fixa).");
+        }
+ 
+        $pdo = self::getConexao();
+ 
+        $sql = "UPDATE vaga SET disponibilidade = 'disponível' WHERE codigo_vaga = :cod";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([":cod" => $codigoVaga]);
+ 
+        return true;
+    }
+}
+try{
+    print_r(vaga::listar(1)); 
+}catch(Exception $err){
+    echo $err->getMessage();
+}
 ?>

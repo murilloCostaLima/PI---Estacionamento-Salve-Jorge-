@@ -148,17 +148,8 @@ class cliente
     }
 }
 
-// $cliente1 = new cliente(
-//     id: 1,  
-//     nome: "Ana",      
-//     telefone: "11 98756-3744", 
-//     endereco: "Rua Rio do Oeste",
-//     bairro: "Itaquera", 
-//     tipo_cliente: "Avulso" 
-// );
-
 try{
-    print_r(cliente::listar("Ana")); 
+    print_r(cliente::inserir("Maria", "11 37484-4857", "R. Virgínia Ferni", "avenida itaquera", "Mensal")); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

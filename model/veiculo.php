@@ -10,7 +10,7 @@ class veiculo
     private string  $cor;
     private string  $marca;
     private string  $modelo;
-    private bool  $tipo_veiculo;  // ENUM no BD
+    private string  $tipo_veiculo;  // ENUM no BD
     private ?string $hr_entrada;   // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
     private ?string $hr_saida;     // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
 
@@ -26,7 +26,7 @@ class veiculo
         string $cor = "",
         string $marca = "",
         string $modelo = "",
-        bool $tipo_veiculo = false,
+        string $tipo_veiculo,
         ?string $hr_entrada = null,
         ?string $hr_saida = null
     ) {
@@ -100,36 +100,78 @@ class veiculo
     }
 
     /* ===================== Inserir ===================== */
-    public static function inserir(
-        ?int   $id_vaga,
-        int    $id_cliente,
-        string $placa,
-        string $cor,
-        string $marca,
-        string $modelo,
-        string $tipo_veiculo,
-        ?string $hr_entrada = null,   // se vier null, usa NOW()
-        ?string $hr_saida = null
-    ): int
+public static function inserir(
+    ?int   $id_vaga,
+    int    $id_cliente,
+    string $placa,
+    string $cor,
+    string $marca,
+    string $modelo,
+    string $tipo_veiculo,
+    ?string $hr_entrada = null,
+    ?string $hr_saida = null,      // será ignorado/forçado para NULL
+    ?string $codigo_chave = null): int
     {
-        if (!self::validarTipoVeiculo($tipo_veiculo)) {
+        if ($id_vaga === null)
+        {
+            throw new Exception("É obrigatório informar uma vaga para estacionar.");
+        }
+
+        if (!self::validarTipoVeiculo($tipo_veiculo))
+        {
             throw new Exception("tipo_veiculo inválido para o ENUM.");
         }
 
         $pdo = self::getConexao();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Se não informarem hr_entrada, define automaticamente
-        if ($hr_entrada === null) {
-            $hr_entrada = date('Y-m-d H:i:s');
+    // Sempre insere veículo ATIVO (sem saída). A saída deve ser registrada depois.
+    $hr_saida = null;
+    if ($hr_entrada === null) {
+        $hr_entrada = date('Y-m-d H:i:s');
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        // 1) Bloqueia a linha da vaga e valida disponibilidade
+        $stmtVaga = $pdo->prepare("
+            SELECT disponibilidade
+            FROM vaga
+            WHERE id_vaga = :id_vaga
+            FOR UPDATE
+        ");
+        $stmtVaga->execute([":id_vaga" => $id_vaga]);
+        $vaga = $stmtVaga->fetch(PDO::FETCH_ASSOC);
+        if (!$vaga) {
+            throw new Exception("A vaga informada não existe.");
         }
 
-        $sql = "INSERT INTO veiculo
-                (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
-                VALUES
-                (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
+        // Consistência: ajuste aqui para o que você usa no BD: 'disponivel'/'ocupada' ou 1/0
+        if (strtolower((string)$vaga['disponibilidade']) !== 'disponivel') {
+            throw new Exception("Vaga ocupada: indisponível para estacionar.");
+        }
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
+        // 2) Garante que não existe veículo ATIVO nessa vaga
+        $stmtCheck = $pdo->prepare("
+            SELECT id_veiculo
+            FROM veiculo
+            WHERE id_vaga = :id_vaga AND hr_saida IS NULL
+            FOR UPDATE
+        ");
+        $stmtCheck->execute([":id_vaga" => $id_vaga]);
+        if ($stmtCheck->fetch(PDO::FETCH_ASSOC)) {
+            throw new Exception("Vaga ocupada: já existe veículo sem saída registrada nessa vaga.");
+        }
+
+        // 3) Insere o veículo (ativo: hr_saida = NULL)
+        $sqlV = "INSERT INTO veiculo
+                 (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
+                 VALUES
+                 (:id_vaga, :id_cliente, :placa, :cor, :marca, :modelo, :tipo_veiculo, :hr_entrada, :hr_saida)";
+
+        $stmtV = $pdo->prepare($sqlV);
+        $stmtV->execute([
             ":id_vaga"      => $id_vaga,
             ":id_cliente"   => $id_cliente,
             ":placa"        => $placa,
@@ -141,14 +183,109 @@ class veiculo
             ":hr_saida"     => $hr_saida
         ]);
 
-        $id = (int)$pdo->lastInsertId();
-        if ($id <= 0) {
+        $idVeiculo = (int)$pdo->lastInsertId();
+        if ($idVeiculo <= 0) {
             throw new Exception("Não foi possível inserir o veículo.");
         }
 
-        return $id;
+        // 4) Marca a vaga como ocupada
+        $stmtUpdVaga = $pdo->prepare("
+            UPDATE vaga SET disponibilidade = 'ocupada'
+            WHERE id_vaga = :id_vaga
+        ");
+        $stmtUpdVaga->execute([":id_vaga" => $id_vaga]);
+
+        // 5) Insere a chave vinculada ao veículo e à vaga
+        if ($codigo_chave === null) {
+            $sqlC = "INSERT INTO chave (id_veiculo, id_vaga) VALUES (:id_veiculo, :id_vaga)";
+            $stmtC = $pdo->prepare($sqlC);
+            $stmtC->execute([
+                ":id_veiculo" => $idVeiculo,
+                ":id_vaga"    => $id_vaga
+            ]);
+        } else {
+            $sqlC = "INSERT INTO chave (id_veiculo, id_vaga, codigo_chave)
+                     VALUES (:id_veiculo, :id_vaga, :codigo_chave)";
+            $stmtC = $pdo->prepare($sqlC);
+            $stmtC->execute([
+                ":id_veiculo"   => $idVeiculo,
+                ":id_vaga"      => $id_vaga,
+                ":codigo_chave" => $codigo_chave
+            ]);
+        }
+
+        $pdo->commit();
+        return $idVeiculo;
+
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw new Exception("Falha ao inserir veículo e chave: " . $e->getMessage(), 0, $e);
+    }
+    }
+    /* ================= Registrar Saída ================= */
+    public static function registrarSaida(int $id_veiculo, ?string $hr_saida = null): bool
+{
+    $pdo = self::getConexao();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    if ($hr_saida === null) {
+        $hr_saida = date('Y-m-d H:i:s');
     }
 
+    try {
+        $pdo->beginTransaction();
+
+        // Descobre a vaga deste veículo ativo
+        $stmtSel = $pdo->prepare("
+            SELECT id_vaga
+            FROM veiculo
+            WHERE id_veiculo = :id AND hr_saida IS NULL
+            FOR UPDATE
+        ");
+        $stmtSel->execute([":id" => $id_veiculo]);
+        $row = $stmtSel->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            throw new Exception("Veículo não encontrado ou já está com saída registrada.");
+        }
+        $id_vaga = (int)$row['id_vaga'];
+
+        // Atualiza a saída
+        $stmtUp = $pdo->prepare("
+            UPDATE veiculo
+            SET hr_saida = :hr_saida
+            WHERE id_veiculo = :id AND hr_saida IS NULL
+        ");
+        $stmtUp->execute([":hr_saida" => $hr_saida, ":id" => $id_veiculo]);
+        if ($stmtUp->rowCount() === 0) {
+            throw new Exception("Não foi possível registrar a saída.");
+        }
+
+        // Verifica se ainda existe algum veículo ativo nessa vaga
+        $stmtCheck = $pdo->prepare("
+            SELECT 1 FROM veiculo
+            WHERE id_vaga = :id_vaga AND hr_saida IS NULL
+            LIMIT 1
+        ");
+        $stmtCheck->execute([":id_vaga" => $id_vaga]);
+        $aindaOcupada = (bool)$stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        // Se não há mais veículo ativo, libera a vaga
+        if (!$aindaOcupada) {
+            $stmtUpd = $pdo->prepare("
+                UPDATE vaga SET disponibilidade = 'disponivel'
+                WHERE id_vaga = :id_vaga
+            ");
+            $stmtUpd->execute([":id_vaga" => $id_vaga]);
+        }
+
+        $pdo->commit();
+        return true;
+
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw new Exception("Falha ao registrar saída: " . $e->getMessage(), 0, $e);
+    }
+}
     /* ===================== Atualizar ===================== */
     public static function atualizar(
         ?int    $id_veiculo,
@@ -202,14 +339,48 @@ class veiculo
     public static function excluir(int $id_veiculo): bool
     {
         $pdo = self::getConexao();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Remove o veículo. Isso automaticamente "desvincula" do cliente,
-        // porque o vínculo é o registro em Veiculo (FK id_cliente).
-        $sql = "DELETE FROM veiculo WHERE id_veiculo = :id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([":id" => $id_veiculo]);
+        try
+        {
+            $pdo->beginTransaction();
 
-        return $stmt->rowCount() > 0;
+            $stmtSel = $pdo->prepare("SELECT id_vaga, hr_saida FROM veiculo WHERE id_veiculo = :id FOR UPDATE");
+            $stmtSel->execute([":id" => $id_veiculo]);
+            $row = $stmtSel->fetch(PDO::FETCH_ASSOC);
+            if (!$row)
+            {
+                $pdo->rollBack();
+                return false;
+            }
+
+            $id_vaga  = $row['id_vaga'] !== null ? (int)$row['id_vaga'] : null;
+            $ativa    = $row['hr_saida'] === null;
+
+            // Exclui chaves vinculadas
+            $stmtC = $pdo->prepare("DELETE FROM chave WHERE id_veiculo = :id");
+            $stmtC->execute([":id" => $id_veiculo]);
+
+            // Exclui o veículo
+            $stmtV = $pdo->prepare("DELETE FROM veiculo WHERE id_veiculo = :id");
+            $stmtV->execute([":id" => $id_veiculo]);
+            $apagou = $stmtV->rowCount() > 0;
+
+            // Se o veículo ainda estava ocupando a vaga, liberar
+            if ($apagou && $ativa && $id_vaga !== null)
+            {
+                $stmtUpd = $pdo->prepare("UPDATE vaga SET disponibilidade = 'disponivel' WHERE id_vaga = :id_vaga");
+                $stmtUpd->execute([":id_vaga" => $id_vaga]);
+            }
+
+            $pdo->commit();
+            return $apagou;
+        }
+        catch (Throwable $e)
+        {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw new Exception("Falha ao excluir veículo/chave: " . $e->getMessage(), 0, $e);
+        }
     }
 
     /* ===================== Listar (para HTML) ===================== 
@@ -219,9 +390,7 @@ class veiculo
     {
         $pdo = self::getConexao();
 
-        $sql = "SELECT 
-                    v.*,
-                    c.nome      AS cliente_nome,
+        $sql = "SELECT v.*, c.nome AS cliente_nome,
                     c.tipo_cliente,
                     c.telefone  AS cliente_telefone
                 FROM veiculo v
@@ -267,7 +436,7 @@ class veiculo
             cor:          $row['cor'],
             marca:        $row['marca'],
             modelo:       $row['modelo'],
-            tipo_veiculo: $row['tipo_veiculo'],
+            tipo_veiculo: (bool)$row['tipo_veiculo'],
             hr_entrada:   $row['hr_entrada'],
             hr_saida:     $row['hr_saida']
         );
@@ -306,21 +475,9 @@ class veiculo
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-/* $veiculo2 = new Veiculo(
-    id_veiculo: 1,
-    id_vaga: 1, 
-    id_cliente: 1,
-    placa: "HTMZT4GU",   
-    cor: "vermelho",
-    marca: "peugeot",
-    modelo: "208",
-    tipo_veiculo: "carro",
-    hr_entrada: "2025-03-12 09:32:00",
-    hr_saida: $hr_saida
-); */
 
 try{
-    print_r(veiculo::excluir(2)); 
+    print_r(veiculo::inserir(3, 2, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro", "2025-01-12 10:29:45", "2025-01-12 12:29:45")); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

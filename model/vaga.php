@@ -163,7 +163,7 @@ class vaga
  
         $pdo = self::getConexao();
  
-        $sql = "UPDATE vaga SET disponibilidade = 'disponível' WHERE codigo_vaga = :cod";
+        $sql = "UPDATE vaga SET disponibilidade = 'disponivel' WHERE codigo_vaga = :cod";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":cod" => $codigoVaga]);
  
@@ -171,7 +171,7 @@ class vaga
     }
 }
 try{
-    print_r(vaga::listar(1)); 
+    print_r(vaga::inserir(3, "disponivel")); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

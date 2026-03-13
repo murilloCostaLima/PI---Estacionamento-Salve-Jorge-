@@ -11,12 +11,12 @@ class cliente
     private string  $tipo_cliente; // ENUM: 'Mensalista', 'Avulso', etc.
 
     public function __construct(
+        int    $id = 0,
         string $nome = "",
         string $telefone = "",
         string $endereco = "",
         string $bairro = "",
-        string $tipo_cliente = "",
-        int    $id = 0
+        string $tipo_cliente = ""
     ) {
         $this->id           = $id;
         $this->nome         = $nome;
@@ -49,44 +49,42 @@ class cliente
         return (new Conexao())->conexao();
     }
 
-    public function inserir()
+    public static function inserir($nome, $telefone, $endereco, $bairro, $tipo_cliente)
     {
         $pdo = self::getConexao();
 
-        // Ajustado para os campos reais da sua tabela de clientes
-        $sql = "INSERT INTO Cliente (nome, telefone, endereco, bairro, tipo_cliente)
+        $sql = "INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
                 VALUES (:nome, :telefone, :endereco, :bairro, :tipo_cliente)";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->execute([
-            ':nome'         => $this->nome,
-            ':telefone'     => $this->telefone,
-            ':endereco'     => $this->endereco,
-            ':bairro'       => $this->bairro,
-            ':tipo_cliente' => $this->tipo_cliente
-        ]);
+        ':nome'         => $nome,
+        ':telefone'     => $telefone,
+        ':endereco'     => $endereco,
+        ':bairro'       => $bairro,
+        ':tipo_cliente' => $tipo_cliente]);
 
         $ultimoID = $pdo->lastInsertId();
 
-        if ($ultimoID <= 0) {
+        if ($ultimoID <= 0)
+        {
             throw new Exception("Não foi possível inserir o cliente.");
         }
-        
-        $this->id = $ultimoID;
+
         return $ultimoID;
     }
 
     public static function listar()
     {
         $pdo = self::getConexao();
-        $sql = "SELECT * FROM Cliente ORDER BY nome";
+        $sql = "SELECT * FROM cliente ORDER BY nome";
         $stmt = $pdo->query($sql);
 
         $clientes = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $clientes[] = new Cliente(
-                id:           $row['id'],
+                id:           $row['id_cliente'],
                 nome:         $row['nome'],
                 telefone:     $row['telefone'],
                 endereco:     $row['endereco'],
@@ -100,7 +98,7 @@ class cliente
     public static function buscarPorID(int $id)
     {
         $pdo = self::getConexao();
-        $sql = "SELECT * FROM Cliente WHERE id = :id";
+        $sql = "SELECT * FROM cliente WHERE id_cliente = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
@@ -108,8 +106,8 @@ class cliente
 
         if (!$row) return null;
 
-        return new Cliente(
-            id:           $row['id'],
+        return new cliente(
+            id:           $row['id_cliente'],
             nome:         $row['nome'],
             telefone:     $row['telefone'],
             endereco:     $row['endereco'],
@@ -121,7 +119,7 @@ class cliente
     public function atualizar()
     {
         $pdo = self::getConexao();
-        $sql = "UPDATE Cliente SET 
+        $sql = "UPDATE cliente SET 
                 nome = :nome, 
                 telefone = :telefone, 
                 endereco = :endereco, 
@@ -144,7 +142,7 @@ class cliente
     public static function excluir(int $id)
     {
         $pdo = self::getConexao();
-        $sql = "DELETE FROM Cliente WHERE id = :id";
+        $sql = "DELETE FROM cliente WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }
@@ -160,7 +158,7 @@ class cliente
 // );
 
 try{
-    print_r(cliente::inserir("Ana", "11 98756-3744", "Rua Rio do Oeste", "Itaquera", "Avulso")); 
+    print_r(cliente::listar("Ana")); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

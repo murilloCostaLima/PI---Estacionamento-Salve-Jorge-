@@ -10,8 +10,8 @@ require_once(__DIR__."/../config/conexao.php");
         public function __construct(
             int $id_vaga = 0,
             int $codigo_vaga,
-            bool $disponibilidade,)
-        {
+            bool $disponibilidade,
+        ){
             $this->id_vaga             = $id_vaga;
             $this->codigo_vaga         = $codigo_vaga;
             $this->disponibilidade     = $disponibilidade;
@@ -75,10 +75,10 @@ require_once(__DIR__."/../config/conexao.php");
             $pdo = self::getConexao();
 
             $sql = "SELECT v.id_vaga,
-            v.código_vaga, 
+            v.codigo_vaga, 
             v.disponibilidade
-            FROM Vaga v 
-            ORDER BY v.código_vaga";
+            FROM vaga v 
+            ORDER BY v.codigo_vaga";
 
             $stmt = $pdo->query($sql);
 
@@ -86,10 +86,10 @@ require_once(__DIR__."/../config/conexao.php");
 
             while($row = $stmt->fetch(PDO::FETCH_ASSOC))
             {
-                $vaga = new Vaga(
-                    id:        $row['id_vaga'],
-                    codigo_vaga:      $row['código_vaga'],
-                    disponibilidade:     (bool)$row['disponibilidade']
+                $vaga = new vaga(
+                    id_vaga:            $row['id_vaga'],
+                    codigo_vaga:        $row['codigo_vaga'],
+                    disponibilidade:    (bool)$row['disponibilidade']
                 );
 
                 array_push($vagas, $vaga);
@@ -102,16 +102,11 @@ require_once(__DIR__."/../config/conexao.php");
         {
             $pdo = self::getConexao();
 
-            $sql = "SELECT u.id_usuario,
-            u.nome,
-            u.email,
-            u.ativo,
-            u.id_perfil,
-            p.nome_perfil AS perfil_nivel 
-            FROM usuarios u
-            INNER JOIN perfis p
-            ON p.id_perfil = u.id_perfil
-            WHERE u.id_usuario = :id";
+            $sql = "SELECT v.id_vaga,
+            v.codigo_vaga, 
+            v.disponibilidade
+            FROM vaga v 
+            WHERE v.id_vaga = :id";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':id'=>$id]);
@@ -120,96 +115,43 @@ require_once(__DIR__."/../config/conexao.php");
 
             if(!$row)
                 {
-                    new Exception("ID de Usuario não Existe. Tente Outro ou, Adicione um usuário com este respectivo ID.");
+                    new Exception("ID da vaga não Existe. Tente Outro ou, Adicione um usuário com este respectivo ID.");
                     return null;
                 }
 
-            $usuario = new usuario(
-                id:        $row['id_usuario'],
-                nome:      $row['nome'],
-                email:     $row['email'],
-                senhaHash: "",
-                IDperfil:  $row['id_perfil'],
-                ativo:     (bool)$row['ativo']
+            $vaga = new vaga(
+                id_vaga:             $row['id_vaga'],
+                codigo_vaga:         $row['codigo_vaga'],
+                disponibilidade:     (bool)$row['disponibilidade']
             );
 
-            $usuario->perfilNome = $row['perfil_nivel'];
-
-            return $usuario;
-        }
-
-         public static function BuscarPorEmail(string $email)
-        {
-            $pdo = self::getConexao();
-
-            $sql = "SELECT u.id_usuario,
-            u.nome,
-            u.email,
-            u.ativo,
-            u.id_perfil,
-            p.nome_perfil AS perfil_nivel 
-            FROM usuarios AS u
-            INNER JOIN perfis p
-            ON p.id_perfil = u.id_perfil
-            WHERE u.email = :email";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([':email'=>$email]);
-
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if(!$row)
-                {
-                    new Exception("Email de Usuario não Existe. Tente Outro ou, Adicione um usuário com este respectivo Email.");
-                    return null;
-                }
-
-            $usuario = new usuario(
-                id:        $row['id_usuario'],
-                nome:      $row['nome'],
-                email:     $row['email'],
-                senhaHash: "",
-                IDperfil:  $row['id_perfil'],
-                ativo:     (bool)$row['ativo']
-            );
-
-            $usuario->email = $row['perfil_nivel'];
-
-            return $usuario;
+            return $vaga;
         }
 
         public static function excluir(int $id)
         {
             $pdo = self::getConexao();
-            $sql = "DELETE FROM `usuarios` WHERE `id` = :id";
+
+            $sql = "DELETE FROM vaga WHERE id_vaga = :id";
             $stmt = $pdo->prepare($sql);
 
             $stmt->execute([':id'=>$id]);
 
-            return $stmt;
-
-            if($stmt->rowCount()===0)
-                {
-                    return false;
-                }
-            return true;
+            return $stmt->rowCount() > 0;
         }
 
         public function atualizar()
         {
             $pdo = self::getConexao();
 
-            $sql = "UPDATE `usuarios` SET `nome` = :nome, `email` = :email,
-            `ativo`=:ativo, `id_perfil`=:perfil WHERE `id_usuario`:=id";
+            $sql = "UPDATE `vaga` SET `codigo_vaga` = :codigo_vaga, 
+                `disponibilidade` = :disponibilidade WHERE `id_vaga` = :id";
 
             $stmt = $pdo->prepare($sql);
 
             $stmt->execute([
-                ':nome'     => $this->nome,
-                ':email'    => $this->email,
-                ':senha'    => $this->senhaHash,
-                ':ativo'    => $this->ativo,
-                ':IDperfil' => $this->IDperfil]);
+                ':codigo_vaga'        => $this->codigo_vaga,
+                ':disponibilidade'    => $this->disponibilidade ]);
 
             if($stmt->rowCount()===0)
                 {

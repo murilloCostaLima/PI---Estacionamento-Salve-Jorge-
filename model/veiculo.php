@@ -320,7 +320,7 @@ class veiculo
 ); */
 
 try{
-    print_r(veiculo::inserir(1, 1, "HTMZT4GU", "vermelho", "peugeot", "208", 'carro', "2025-03-12 09:32:00", "2025-03-12 11:30:00")); 
+    print_r(veiculo::inserir(1, 1, "HTMZT4U", "vermelho", "peugeot", "208", 'carro', "2025-03-12 09:32:00", "2025-03-12 11:30:00")); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

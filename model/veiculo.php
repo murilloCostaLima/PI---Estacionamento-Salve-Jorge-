@@ -111,45 +111,50 @@ class veiculo
     {
         $pdo = self::getConexao();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
- 
+
+        // Normalizar placa
+        $placa = strtoupper(trim($placa));
+
         try
         {
             $pdo->beginTransaction();
- 
-            // Buscar dados da vaga (com segurança)
+
+            // Verificar duplicidade de placa
+            $stmt = $pdo->prepare("SELECT 1 FROM veiculo WHERE placa = :placa LIMIT 1");
+            $stmt->execute([":placa" => $placa]);
+
+            if ($stmt->fetch())
+            {
+                throw new Exception("Esta placa já está cadastrada. Por favor, utilize outra.");
+            }
+
+            // Buscar dados da vaga
             $stmt = $pdo->prepare("SELECT codigo_vaga, disponibilidade FROM vaga WHERE id_vaga = :id");
             $stmt->execute([":id" => $id_vaga]);
             $vaga = $stmt->fetch(PDO::FETCH_ASSOC);
- 
+
             if (!$vaga)
-            {
                 throw new Exception("Vaga não encontrada.");
-            }
- 
+
             if ($vaga['disponibilidade'] === 'ocupada')
-            {
                 throw new Exception("Vaga já está ocupada.");
-            }
- 
-            // Validar tipo de veículo
+
+            // Validar regra moto (85–90)
             vaga::validarVagaPorTipo((int)$vaga['codigo_vaga'], $tipo_veiculo);
- 
+
             // Buscar cliente
             $stmt = $pdo->prepare("SELECT tipo_cliente FROM cliente WHERE id_cliente = :id");
             $stmt->execute([":id" => $id_cliente]);
             $tipoCliente = $stmt->fetchColumn();
- 
+
             if (!$tipoCliente)
-            {
                 throw new Exception("Cliente não encontrado.");
-            }
- 
+
             // Inserir veículo
             $stmt = $pdo->prepare("
-                INSERT INTO veiculo 
-                (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
-                VALUES (:vaga, :cliente, :placa, :cor, :marca, :modelo, :tipo, NOW(), NULL)");
- 
+            INSERT INTO veiculo(id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
+            VALUES(:vaga, :cliente, :placa, :cor, :marca, :modelo, :tipo, NOW(), NULL)");
+
             $stmt->execute([
                 ":vaga"    => $id_vaga,
                 ":cliente" => $id_cliente,
@@ -158,27 +163,25 @@ class veiculo
                 ":marca"   => $marca,
                 ":modelo"  => $modelo,
                 ":tipo"    => $tipo_veiculo]);
- 
+
             $idVeiculo = (int)$pdo->lastInsertId();
- 
-            // Atualizar vaga
+
+            // Ocupa vaga
             $stmt = $pdo->prepare("UPDATE vaga SET disponibilidade = 'ocupada' WHERE id_vaga = :vaga");
             $stmt->execute([":vaga" => $id_vaga]);
- 
-            // Inserir chave
+
+            // Criar chave automaticamente
             $stmt = $pdo->prepare("INSERT INTO chave (id_veiculo, id_vaga) VALUES (:v, :g)");
             $stmt->execute([":v" => $idVeiculo, ":g" => $id_vaga]);
- 
+
             $pdo->commit();
             return $idVeiculo;
- 
         }
         catch (Throwable $e)
         {
             if ($pdo->inTransaction())
-            {
                 $pdo->rollBack();
-            }
+
             throw new Exception("Erro ao inserir veículo: " . $e->getMessage());
         }
     }
@@ -411,7 +414,7 @@ class veiculo
 echo "<pre>";
 try
 {
-    print_r(veiculo::inserir(1, 1, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro")); 
+    print_r(veiculo::inserir(2, 10, "THMPEHO", "branco", "Toyota", "Toyota Corolla", "carro")); 
 }
 catch(Exception $err)
 {
@@ -419,3 +422,4 @@ catch(Exception $err)
 }
 
 // inserir(1, 1, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro")
+// 2, 10, "THMLEHO", "branco", "Toyota", "Toyota Corolla", "carro"

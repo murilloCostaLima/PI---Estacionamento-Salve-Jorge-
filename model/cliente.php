@@ -53,18 +53,31 @@ class cliente
     public static function inserir($nome, $telefone, $endereco, $bairro, $tipo_cliente)
     {
         $pdo = self::getConexao();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $sql = "INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
-                VALUES (:nome, :telefone, :endereco, :bairro, :tipo_cliente)";
+        //Verificar se telefone já existe
+        $stmt = $pdo->prepare("SELECT 1 FROM cliente WHERE telefone = :telefone LIMIT 1");
+
+        $stmt->execute([':telefone' => $telefone]);
+
+        if ($stmt->fetch())
+        {
+            throw new Exception("Este telefone já está cadastrado. Por favor, utilize outro.");
+        }
+
+        //Inserir o cliente
+        $sql = "
+            INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
+            VALUES (:nome, :telefone, :endereco, :bairro, :tipo_cliente)";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->execute([
-        ':nome'         => $nome,
-        ':telefone'     => $telefone,
-        ':endereco'     => $endereco,
-        ':bairro'       => $bairro,
-        ':tipo_cliente' => $tipo_cliente]);
+            ':nome'         => $nome,
+            ':telefone'     => $telefone,
+            ':endereco'     => $endereco,
+            ':bairro'       => $bairro,
+            ':tipo_cliente' => $tipo_cliente]);
 
         $ultimoID = $pdo->lastInsertId();
 
@@ -167,6 +180,7 @@ class cliente
             return true;
 
         }
+
         catch (Throwable $e)
         {
             if ($pdo->inTransaction()) $pdo->rollBack();
@@ -178,7 +192,7 @@ class cliente
 echo "<pre>";
 
 try{
-    print_r(cliente::excluir(1)); 
+    print_r(cliente::inserir("Maria",  "+55 11 10333-3988", "Av. do Contorno, 60", "Itaquera", "Avulso")); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

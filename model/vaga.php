@@ -1,11 +1,12 @@
 <?php
 require_once(__DIR__."/../config/conexao.php");
+require_once(__DIR__."/../config/autoload.php");
  
 class vaga
 {
     private int $id_vaga;
     private int $codigo_vaga;
-    private string $disponibilidade; // ENUM('disponível','ocupada')
+    private string $disponibilidade; // ENUM('disponivel','ocupada')
  
     public function __construct(
         int $id_vaga = 0,
@@ -123,12 +124,12 @@ class vaga
     ====================================================================================== */
     public static function validarVagaPorTipo(int $codigoVaga, string $tipoVeiculo)
     {
-        if ($codigo_vaga >= 1 && $codigo_vaga <=84 && strtolower($tipoVeiculo) !== "carro", "carro grande")
-        {
-            throw new Exception("Vagas 1 a 84 não são permitidas motos."); 
+        $tipo = strtolower(trim($tipoVeiculo));
+
+        if ($codigoVaga >= 1 && $codigoVaga <= 84 && !in_array($tipo, ["carro", "carro grande"])) {
+            throw new Exception("Vagas 1 a 84 são permitidas apenas para carros.");
         }
-        else ($codigoVaga >= 85 && $codigoVaga <= 90 && strtolower($tipoVeiculo) !== "moto")
-        {
+        elseif ($codigoVaga >= 85 && $codigoVaga <= 90 && $tipo !== "moto") {
             throw new Exception("Vagas 85 a 90 são exclusivas para motos.");
         }
     }

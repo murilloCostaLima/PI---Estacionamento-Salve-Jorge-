@@ -1,18 +1,19 @@
 <?php
-require_once(__DIR__ . "/../config/conexao.php");
+require_once(__DIR__."/../config/conexao.php");
+require_once(__DIR__."/../config/autoload.php");
 
 class veiculo
 {
     private ?int     $id_veiculo;
-    private ?int    $id_vaga;      // pode ser nulo se ainda não alocado
+    private ?int    $id_vaga;
     private int     $id_cliente;
     private string  $placa;
     private string  $cor;
     private string  $marca;
     private string  $modelo;
     private string  $tipo_veiculo; // ENUM no BD
-    private ?string $hr_entrada;   // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
-    private ?string $hr_saida;     // DATETIME/ TIMESTAMP (ajuste conforme seu BD)
+    private ?string $hr_entrada;   // DATETIME/ TIMESTAMP (ajuste conforme o BD)
+    private ?string $hr_saida;     // DATETIME/ TIMESTAMP (ajuste conforme o BD)
 
     // Campos auxiliares para joins (não existem na tabela):
     public ?array $cliente = null; // quando buscar com join
@@ -60,7 +61,7 @@ class veiculo
         return (new Conexao())->conexao();
     }
 
-    /* =============== Util: ENUM de tipo_veiculo =============== 
+    /* =============== ENUM de tipo_veiculo =============== 
        Busca os valores possíveis do ENUM direto do INFORMATION_SCHEMA.
        Se preferir, troque por um array fixo, ex.: return ['CARRO','MOTO',...];
     */
@@ -68,7 +69,6 @@ class veiculo
     {
         $pdo = self::getConexao();
 
-        // Ajuste o nome do BD se seu schema não for o database atual de conexão:
         $stmt = $pdo->query("
             SELECT COLUMN_TYPE
             FROM INFORMATION_SCHEMA.COLUMNS
@@ -80,7 +80,7 @@ class veiculo
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row || empty($row['COLUMN_TYPE'])) return [];
 
-        // Ex.: "enum('CARRO','MOTO','CAMINHONETE')" -> ['CARRO','MOTO','CAMINHONETE']
+        // Ex.: "enum('CARRO','MOTO','CARRO GRANDE')" -> ['CARRO','MOTO','CARRO GRANDE']
         $enum = $row['COLUMN_TYPE'];
         preg_match("/^enum\((.*)\)$/i", $enum, $matches);
         if (!isset($matches[1])) return [];
@@ -111,21 +111,45 @@ class veiculo
     {
         $pdo = self::getConexao();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        vaga::validarVagaPorTipo((int)$pdo->query("SELECT codigo_vaga FROM vaga WHERE id_vaga=$id_vaga")->fetchColumn(), $tipo_veiculo);
-
+ 
         try
         {
             $pdo->beginTransaction();
-
-            // Cliente
-            $tipoCliente = $pdo->query("SELECT tipo_cliente FROM cliente WHERE id_cliente=$id_cliente")->fetchColumn();
-
-            // Inserir veículo (ATIVO)
+ 
+            // Buscar dados da vaga (com segurança)
+            $stmt = $pdo->prepare("SELECT codigo_vaga, disponibilidade FROM vaga WHERE id_vaga = :id");
+            $stmt->execute([":id" => $id_vaga]);
+            $vaga = $stmt->fetch(PDO::FETCH_ASSOC);
+ 
+            if (!$vaga)
+            {
+                throw new Exception("Vaga não encontrada.");
+            }
+ 
+            if ($vaga['disponibilidade'] === 'ocupada')
+            {
+                throw new Exception("Vaga já está ocupada.");
+            }
+ 
+            // Validar tipo de veículo
+            vaga::validarVagaPorTipo((int)$vaga['codigo_vaga'], $tipo_veiculo);
+ 
+            // Buscar cliente
+            $stmt = $pdo->prepare("SELECT tipo_cliente FROM cliente WHERE id_cliente = :id");
+            $stmt->execute([":id" => $id_cliente]);
+            $tipoCliente = $stmt->fetchColumn();
+ 
+            if (!$tipoCliente)
+            {
+                throw new Exception("Cliente não encontrado.");
+            }
+ 
+            // Inserir veículo
             $stmt = $pdo->prepare("
-                INSERT INTO veiculo (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
+                INSERT INTO veiculo 
+                (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada, hr_saida)
                 VALUES (:vaga, :cliente, :placa, :cor, :marca, :modelo, :tipo, NOW(), NULL)");
-
+ 
             $stmt->execute([
                 ":vaga"    => $id_vaga,
                 ":cliente" => $id_cliente,
@@ -134,24 +158,27 @@ class veiculo
                 ":marca"   => $marca,
                 ":modelo"  => $modelo,
                 ":tipo"    => $tipo_veiculo]);
-
+ 
             $idVeiculo = (int)$pdo->lastInsertId();
-
-            // Ocupa vaga SEMPRE se mensal
-            $pdo->prepare("UPDATE vaga SET disponibilidade='ocupada'
-            WHERE id_vaga=:vaga")->execute([":vaga" => $id_vaga]);
-
-            // Vincula chave
-            $pdo->prepare("INSERT INTO chave (id_veiculo, id_vaga)
-            VALUES (:v, :g)")->execute([":v" => $idVeiculo,":g" => $id_vaga]);
-
+ 
+            // Atualizar vaga
+            $stmt = $pdo->prepare("UPDATE vaga SET disponibilidade = 'ocupada' WHERE id_vaga = :vaga");
+            $stmt->execute([":vaga" => $id_vaga]);
+ 
+            // Inserir chave
+            $stmt = $pdo->prepare("INSERT INTO chave (id_veiculo, id_vaga) VALUES (:v, :g)");
+            $stmt->execute([":v" => $idVeiculo, ":g" => $id_vaga]);
+ 
             $pdo->commit();
             return $idVeiculo;
-
+ 
         }
         catch (Throwable $e)
         {
-            if ($pdo->inTransaction()) $pdo->rollBack();
+            if ($pdo->inTransaction())
+            {
+                $pdo->rollBack();
+            }
             throw new Exception("Erro ao inserir veículo: " . $e->getMessage());
         }
     }
@@ -289,7 +316,7 @@ class veiculo
     }
 
     /* ===================== Listar (para HTML) ===================== 
-       Ideal para a lista da sua View: traz info do cliente junto.
+                        traz info do cliente junto.
     */
     public static function listar(): array
     {
@@ -356,7 +383,7 @@ class veiculo
             "bairro"       => $row['bairro']
         ];
 
-        // Dados da vaga (se houver)
+        // Dados da vaga
         if (!empty($row['codigo_vaga'])) {
             $veic->vaga = [
                 "id_vaga"        => (int)$row['id_vaga'],
@@ -381,8 +408,14 @@ class veiculo
     }
 }
 
-try{
-    print_r(veiculo::inserir(3, 2, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro", "2025-01-12 10:29:45", "2025-01-12 12:29:45")); 
-}catch(Exception $err){
+echo "<pre>";
+try
+{
+    print_r(veiculo::inserir(1, 1, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro")); 
+}
+catch(Exception $err)
+{
     echo $err->getMessage();
 }
+
+// inserir(1, 1, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro")

@@ -1,5 +1,6 @@
 <?php
-    require_once(__DIR__ . "/../config/conexao.php");
+    require_once(__DIR__."/../config/conexao.php");
+    require_once(__DIR__."/../config/autoload.php");
 
 class cliente
 {
@@ -174,8 +175,10 @@ class cliente
     }
 }
 
+echo "<pre>";
+
 try{
-    print_r(cliente::inserir("Maria", "11 37484-4857", "R. Virgínia Ferni", "avenida itaquera", "Mensal")); 
+    print_r(cliente::excluir(1)); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

@@ -139,12 +139,38 @@ class cliente
         ]);
     }
 
-    public static function excluir(int $id)
+    public static function excluir(int $id_cliente): bool
     {
         $pdo = self::getConexao();
-        $sql = "DELETE FROM cliente WHERE id = :id";
-        $stmt = $pdo->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        try
+        {
+            $pdo->beginTransaction();
+
+            // Buscar veículos do cliente
+            $stmtV = $pdo->prepare("SELECT id_veiculo FROM veiculo WHERE id_cliente = :id");
+            $stmtV->execute([":id" => $id_cliente]);
+            $veiculos = $stmtV->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($veiculos as $idVeiculo)
+            {
+                veiculo::excluir((int)$idVeiculo);
+            }
+
+            // Excluir cliente
+            $stmtC = $pdo->prepare("DELETE FROM cliente WHERE id_cliente = :id");
+            $stmtC->execute([":id" => $id_cliente]);
+
+            $pdo->commit();
+            return true;
+
+        }
+        catch (Throwable $e)
+        {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw new Exception("Erro ao excluir cliente: " . $e->getMessage());
+        }
     }
 }
 

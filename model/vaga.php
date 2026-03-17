@@ -23,59 +23,7 @@ class vaga
     }
  
     /* =====================================================
-       1. NÃO PERMITIR MAIS QUE 90 VAGAS
-    ====================================================== */
-    public static function inserir(string $codigoVaga, bool $disponibilidade): string
-    {
-        $pdo = self::getConexao();
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        try
-        {
-            // Sempre começa transação
-            $pdo->beginTransaction();
-
-            // Verifica quantas vagas já existem
-            $stmtCount = $pdo->query("SELECT COUNT(*) AS total FROM vaga FOR UPDATE");
-            $count = (int) $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
-
-            if ($count >= 90)
-            {
-                // Cancela transação e lança erro
-                $pdo->rollBack();
-                throw new Exception("O estacionamento já possui o máximo de 90 vagas.");
-            }
-
-            // Insere a nova vaga
-            $sql = "INSERT INTO vaga (codigo_vaga, disponibilidade)
-                    VALUES (:codigo, :disp)";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':codigo', $codigoVaga);
-            $stmt->bindValue(':disp',   $disponibilidade, PDO::PARAM_BOOL);
-
-            $stmt->execute();
-
-            // Finaliza a transação
-            $pdo->commit();
-
-            return $pdo->lastInsertId();
-
-        }  
-        catch (Throwable $e)
-        {
-
-            if ($pdo->inTransaction())
-            {
-                $pdo->rollBack();
-            }
-
-            throw new Exception("Erro ao inserir vaga: " . $e->getMessage(), 0, $e);
-        }
-    }
- 
-    /* =====================================================
-       2. LISTAR TODAS AS VAGAS
+       1. LISTAR TODAS AS VAGAS
     ====================================================== */
     public static function listar()
     {
@@ -95,7 +43,7 @@ class vaga
     }
  
     /* =====================================================
-       3. BUSCAR VAGA POR ID
+       2. BUSCAR VAGA POR ID
     ====================================================== */
     public static function buscarPorID(int $id)
     {
@@ -116,7 +64,7 @@ class vaga
     }
  
     /* =====================================================
-       4. OCUPAR VAGA AO INSERIR VEÍCULO
+       3. OCUPAR VAGA AO INSERIR VEÍCULO
           - Regras importantes aqui!
     ====================================================== */
     public static function ocuparVaga(int $codigoVaga, string $tipoVeiculo, string $tipoCliente)
@@ -152,7 +100,7 @@ class vaga
     }
  
     /* =====================================================
-       5. LIBERAR VAGA
+       4. LIBERAR VAGA
           - Somente avulso
     ====================================================== */
     public static function liberarVaga(int $codigoVaga, string $tipoCliente)
@@ -169,9 +117,25 @@ class vaga
  
         return true;
     }
+
+    /* ===================================================================================
+       5. PERMITIR QUE AS VAGAS 1-84 APENAS CARROS OU CARROS GRANDES, E 85-90 APENAS MOTOS
+    ====================================================================================== */
+    public static function validarVagaPorTipo(int $codigoVaga, string $tipoVeiculo)
+    {
+        if ($codigo_vaga >= 1 && $codigo_vaga <=84 && strtolower($tipoVeiculo) !== "carro", "carro grande")
+        {
+            throw new Exception("Vagas 1 a 84 não são permitidas motos."); 
+        }
+        else ($codigoVaga >= 85 && $codigoVaga <= 90 && strtolower($tipoVeiculo) !== "moto")
+        {
+            throw new Exception("Vagas 85 a 90 são exclusivas para motos.");
+        }
+    }
 }
+echo "<pre>";
 try{
-    print_r(vaga::inserir(3, "disponivel")); 
+    print_r(vaga::listar()); 
 }catch(Exception $err){
     echo $err->getMessage();
 }

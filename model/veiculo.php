@@ -416,10 +416,15 @@ class veiculo
         $pdo = self::getConexao();
 
         // SQL base
-        $sql = "SELECT v.*, c.nome AS cliente_nome,
-                c.telefone AS cliente_telefone,
-                c.tipo_cliente FROM veiculo v
-            INNER JOIN cliente c ON c.id_cliente = v.id_cliente WHERE 1 = 1";
+        $sql = "SELECT v.*, 
+               c.nome AS cliente_nome,
+               c.telefone AS cliente_telefone,
+               c.tipo_cliente,
+               vg.codigo_vaga
+        FROM veiculo v
+        INNER JOIN cliente c ON c.id_cliente = v.id_cliente
+        LEFT JOIN vaga vg ON vg.id_vaga = v.id_vaga
+        WHERE 1 = 1";
 
         $params = [];
 
@@ -446,7 +451,7 @@ class veiculo
         }
 
         // Ordenação
-        $sql .= " ORDER BY v.hr_entrada DESC";
+        $sql .= " ORDER BY v.hr_entrada ASC";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);

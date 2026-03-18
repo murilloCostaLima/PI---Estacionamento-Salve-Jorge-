@@ -8,7 +8,8 @@ session_start();
 $filtros = [
     'tipo_veiculo' => $_GET['fTipo']   ?? '',
     'tipo_cliente' => $_GET['fStatus'] ?? '',
-    'busca'        => $_GET['fBusca']  ?? '',];
+    'busca'        => $_GET['fBusca']  ?? '',
+];
 
 $veiculos = veiculo::listarComFiltros($filtros);
 ?>
@@ -104,9 +105,20 @@ $veiculos = veiculo::listarComFiltros($filtros);
         <?php endif ?>
 
         <!-- CABEÇALHO DA PÁGINA -->
+
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="section-title">Gerenciamento de clientes</h4>
+            <h4 class="section-title mb-0">Gerenciamento de clientes</h4>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-lg btn-primary px-5">
+                    Cadastrar Cliente
+                </button>
+                <button class="btn btn-lg btn-primary px-5">
+                    Cadastrar Veículo
+                </button>
+            </div>
         </div>
+
 
         <div class="content-card">
 
@@ -118,7 +130,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" name="fTipo">
-                            <option value="">Tipos de Veículos</option>
+                            <option value="">Todos os Veículos</option>
                             <option value="carro" <?= $filtros['tipo_veiculo'] == "carro" ? 'selected' : '' ?>>Carro</option>
                             <option value="moto" <?= $filtros['tipo_veiculo'] == "moto" ? 'selected' : '' ?>> Moto</option>
                             <option value="carro grande" <?= $filtros['tipo_veiculo'] == "carro grande" ? 'selected' : '' ?>>Carro Grande</option>
@@ -126,7 +138,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" name="fStatus">
-                            <option value="">Tipos de Cliente</option>
+                            <option value="">Todos os tipos de Cliente</option>
                             <option value="mensal">Mensal</option>
                             <option value="avulso">Avulso</option>
                         </select>
@@ -142,8 +154,8 @@ $veiculos = veiculo::listarComFiltros($filtros);
                         <thead>
                             <tr>
                                 <th>Nome / Telefone</th>
-                                <th>Veículo</th>
-                                <th>Cor</th>
+                                <th>Veículo / Cor</th>
+                                <th>Vaga</th>
                                 <th>Placa do Veículo</th>
                                 <th>Status do Cliente</th>
                                 <th class="text-end">Ações</th>
@@ -159,15 +171,18 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                             <strong><?= htmlspecialchars($v['cliente_nome']) ?></strong><br>
                                             <small><?= htmlspecialchars($v['cliente_telefone']) ?></small>
                                         </td>
-                                        <td><?= ucfirst($v['modelo']) ?></td>
-                                        <td><?= ucfirst($v['cor']) ?></td>
+                                        <td>
+                                            <strong><?= ucfirst($v['modelo']) ?></strong><br>
+                                            <small><?= htmlspecialchars($v['cor']) ?></small>
+                                        </td>
+                                        <td><?= htmlspecialchars($v['codigo_vaga']) ?></td>
                                         <td><?= htmlspecialchars($v['placa']) ?></td>
                                         <td>
                                             <?php $tipoCliente = $v['tipo_cliente'];
 
-                                            $cores = ['Mensal' => 'primary','Avulso' => 'danger'];
+                                            $cores = ['Mensal' => 'primary', 'Avulso' => 'danger'];
 
-                                            $corBadge = $cores[$tipoCliente] ?? 'secondary';?>
+                                            $corBadge = $cores[$tipoCliente] ?? 'secondary'; ?>
                                             <span class="badge bg-<?= $corBadge ?>">
                                                 <?= htmlspecialchars($tipoCliente) ?>
                                             </span>

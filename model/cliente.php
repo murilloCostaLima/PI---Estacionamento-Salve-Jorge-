@@ -189,10 +189,10 @@ class cliente
     }
 }
 
-echo "<pre>";
+// echo "<pre>";
 
-try{
-    print_r(cliente::inserir("Maria",  "+55 11 10333-3988", "Av. do Contorno, 60", "Itaquera", "Avulso")); 
-}catch(Exception $err){
-    echo $err->getMessage();
-}
+// try{
+//     print_r(cliente::inserir("Paulo Jorge",  "+55 11 18963-3999", "Av. do Contorno, 60", "Itaquera", "Mensal")); 
+// }catch(Exception $err){
+//     echo $err->getMessage();
+// }

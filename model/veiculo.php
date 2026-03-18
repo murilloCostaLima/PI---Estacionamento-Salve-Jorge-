@@ -409,17 +409,61 @@ class veiculo
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /* ============ Filtros do Formulário inicial ============ */
+    public static function listarComFiltros(array $filtros): array
+    {
+        $pdo = self::getConexao();
+
+        // SQL base
+        $sql = "SELECT v.*, c.nome AS cliente_nome,
+                c.telefone AS cliente_telefone,
+                c.tipo_cliente FROM veiculo v
+            INNER JOIN cliente c ON c.id_cliente = v.id_cliente WHERE 1 = 1";
+
+        $params = [];
+
+        // 🔍 Busca por placa, nome ou telefone
+        if (!empty($filtros['busca']))
+        {
+            $sql .= " AND (v.placa LIKE :busca OR c.nome
+                LIKE :busca OR c.telefone LIKE :busca)";
+            $params[':busca'] = '%' . $filtros['busca'] . '%';
+        }
+
+        // 🚗 Filtro por tipo de veículo
+        if (!empty($filtros['tipo_veiculo']))
+        {
+            $sql .= " AND v.tipo_veiculo = :tipo_veiculo";
+            $params[':tipo_veiculo'] = $filtros['tipo_veiculo'];
+        }
+
+        // 👤 Filtro por tipo de cliente
+        if (!empty($filtros['tipo_cliente']))
+        {
+            $sql .= " AND c.tipo_cliente = :tipo_cliente";
+            $params[':tipo_cliente'] = ucfirst(strtolower($filtros['tipo_cliente']));
+        }
+
+        // Ordenação
+        $sql .= " ORDER BY v.hr_entrada DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 
-echo "<pre>";
-try
-{
-    print_r(veiculo::inserir(2, 10, "THMPEHO", "branco", "Toyota", "Toyota Corolla", "carro")); 
-}
-catch(Exception $err)
-{
-    echo $err->getMessage();
-}
+// echo "<pre>";
+// try
+// {
+//     print_r(veiculo::inserir(3, 14, "PHMPEHO", "azul", "Toyota", "Toyota Corolla", "carro")); 
+// }
+// catch(Exception $err)
+// {
+//     echo $err->getMessage();
+// }
 
 // inserir(1, 1, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro")
 // 2, 10, "THMLEHO", "branco", "Toyota", "Toyota Corolla", "carro"

@@ -124,7 +124,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
                 </div>
             <?php endif ?>
 
-            <form id="painelCliente" method="POST" action="../controller/imovelCTR.php" enctype="multipart/form-data">
+            <form id="painelCliente" method="POST" action="../controller/clientectr.php" enctype="multipart/form-data">
 
                 <!-- INFORMAÇÕES CLIENTE -->
                 <h5 class="section-title"><i class="bi bi-info-circle me-2"></i>Informações do Cliente</h5>

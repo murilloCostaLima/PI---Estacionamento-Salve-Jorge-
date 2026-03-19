@@ -15,10 +15,10 @@ if ($acao == 'cadastrarCompleto') {
     $endereco = $_POST['endereco'];
 
     // salva cliente
-    $cliente_id = cliente::cadastrar($nome, $telefone, $tipoCliente, $bairro, $endereco);
+    $cliente_id = cliente::inserir($nome, $telefone, $endereco, $bairro, $tipo_cliente);
 
     // 🔹 DADOS VEÍCULO
-    $tipoVeiculo = $_POST['tipoVeiculo'];
+    $tipo_veiculo = $_POST['tipoVeiculo'];
     $cor = $_POST['cor'];
     $placa = $_POST['placa'];
     $vaga = $_POST['vaga'];
@@ -26,12 +26,33 @@ if ($acao == 'cadastrarCompleto') {
     $modelo = $_POST['modelo'];
 
     // REGRA DE NEGÓCIO
+    if ($vaga >= 85 && $vaga <= 90 && $tipo_veiculo != 'moto') {
+        die("Erro: vagas 85–90 são exclusivas para motos.");
+    }
+
+    veiculo::inserir($veiculo_id, $cor, $placa, $vaga, $marca, $modelo, $tipo_veiculo);
+
+    header("Location: ../view/PainelCliente.php?sucesso=1");
+    exit;
+}
+
+if ($acao == 'cadastrarVeiculo') {
+
+    $id_cliente = $_POST['tipoCliente']; // aqui é o ID do cliente
+    $tipo_veiculo = $_POST['tipoVeiculo'];
+    $cor = $_POST['cor'];
+    $placa = $_POST['placa'];
+    $vaga = $_POST['vaga'];
+    $marca = $_POST['marca'];
+    $modelo = $_POST['modelo'];
+
+    // REGRA
     if ($vaga >= 85 && $vaga <= 90 && $tipoVeiculo != 'moto') {
         die("Erro: vagas 85–90 são exclusivas para motos.");
     }
 
-    veiculo::cadastrar($cliente_id, $tipoVeiculo, $cor, $placa, $vaga, $marca, $modelo);
+    veiculo::inserir($id_veiculo, $cor, $placa, $vaga, $marca, $modelo, $tipo_veiculo);
 
-    header("Location: ../view/PainelCliente.php?sucesso=1");
+    header("Location: ../view/PainelVeiculo.php?sucesso=1");
     exit;
 }

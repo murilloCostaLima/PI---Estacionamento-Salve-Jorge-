@@ -118,20 +118,21 @@ $sucesso = $_GET['sucesso'] ?? 0;
 
     <div class="container mt-5">
         <div class="form-card">
-            <form id="painelCliente" method="POST" action="../controller/imovelCTR.php" enctype="multipart/form-data">
+            
 
-                <div class="card-header-custom">
-                    <h4 class="m-0">Novo Cadastro de Veículo</h4>
-                    <a href="ViewPainel.php" class="btn btn-lg btn-primary px-5">Voltar para Lista</a>
+            <div class="card-header-custom">
+                <h4 class="m-0">Novo Cadastro de Veículo</h4>
+                <a href="ViewPainel.php" class="btn btn-lg btn-primary px-5">Voltar para Lista</a>
+            </div>
+
+            <?php if ($sucesso == 1): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Parabéns!</strong> Veículo cadastrado com sucesso.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+            <?php endif ?>
 
-                <?php if ($sucesso == 1): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <strong>Parabéns!</strong> Veículo cadastrado com sucesso.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <?php endif ?>
-
+            <form id="painelCliente" method="POST" action="../controller/clientectr.php" enctype="multipart/form-data">
                 <!-- INFORMAÇÕES VEÍCULO -->
                 <h5 class="section-title"><i class="bi bi-info-circle me-2"></i>Informações do Veículo</h5>
                 <div class="row">

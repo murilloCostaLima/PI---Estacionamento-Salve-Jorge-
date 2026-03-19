@@ -56,25 +56,6 @@ $sucesso = $_GET['sucesso'] ?? 0;
             margin-bottom: 30px;
         }
 
-        /* Estilos para a pré-visualização de fotos */
-        /* .preview-item {
-            position: relative;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            background: #fff;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .preview-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-bottom: 8px;
-        } */
-
         .preview-item:hover {
             border-color: #0d6efd;
             box-shadow: 0 4px 8px rgba(13, 110, 253, 0.1);
@@ -268,7 +249,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
                 </div>
 
                 <div class="d-flex justify-content-end gap-3 mt-5 border-top pt-4">
-                    <button type="submit" class="btn btn-lg btn-primary px-5">Cadastrar Cliente e Veículo</button>
+                    <button type="submit" name="acao" value="cadastrarCompleto" class="btn btn-lg btn-primary px-5">Cadastrar Cliente e Veículo</button>
                 </div>
 
             </form>

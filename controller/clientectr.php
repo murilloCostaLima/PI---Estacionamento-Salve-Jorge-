@@ -1,58 +1,108 @@
 <?php
 
+require_once("../config/conexao.php");
 require_once("../model/cliente.php");
 require_once("../model/veiculo.php");
 
 $acao = $_POST['acao'] ?? '';
 
-if ($acao == 'cadastrarCompleto') {
+// ===============================
+// CADASTRAR CLIENTE + VEÍCULO
+// ===============================
+if ($acao === 'cadastrarCompleto') {
 
-    // 🔹 DADOS CLIENTE
-    $nome = $_POST['nomeCliente'];
-    $telefone = $_POST['telefone'];
-    $tipoCliente = $_POST['tipoCliente'];
-    $bairro = $_POST['bairro'];
-    $endereco = $_POST['endereco'];
+    // ========= DADOS DO CLIENTE =========
+    $nome         = $_POST['nomeCliente'] ?? null;
+    $telefone     = $_POST['telefone'] ?? null;
+    $tipo_cliente = $_POST['tipoCliente'] ?? null;
+    $bairro       = $_POST['bairro'] ?? null;
+    $endereco     = $_POST['endereco'] ?? null;
 
-    // salva cliente
-    $cliente_id = cliente::inserir($nome, $telefone, $endereco, $bairro, $tipo_cliente);
+    // ========= DADOS DO VEÍCULO =========
+    $tipo_veiculo = $_POST['tipoVeiculo'] ?? null;
+    $cor          = $_POST['cor'] ?? null;
+    $placa        = $_POST['placa'] ?? null;
+    $vaga         = $_POST['vaga'] ?? null;
+    $marca        = $_POST['marca'] ?? null;
+    $modelo       = $_POST['modelo'] ?? null;
 
-    // 🔹 DADOS VEÍCULO
-    $tipo_veiculo = $_POST['tipoVeiculo'];
-    $cor = $_POST['cor'];
-    $placa = $_POST['placa'];
-    $vaga = $_POST['vaga'];
-    $marca = $_POST['marca'];
-    $modelo = $_POST['modelo'];
+    try {
+        // Conexão e transação
+        $pdo = (new Conexao())->conexao();
+        $pdo->beginTransaction();
 
-    // REGRA DE NEGÓCIO
-    if ($vaga >= 85 && $vaga <= 90 && $tipo_veiculo != 'moto') {
-        die("Erro: vagas 85–90 são exclusivas para motos.");
+        // ===== INSERIR CLIENTE =====
+        $id_cliente = cliente::inserir(
+            $nome,
+            $telefone,
+            $endereco,
+            $bairro,
+            $tipo_cliente
+        );
+
+        // ===== INSERIR VEÍCULO =====
+        veiculo::inserir(
+            (int)$vaga,
+            (int)$id_cliente,
+            $placa,
+            $cor,
+            $marca,
+            $modelo,
+            $tipo_veiculo
+        );
+
+        // Confirma tudo
+        $pdo->commit();
+
+        header("Location: ../view/ViewPainel.php?sucesso=1");
+        exit;
+
+    } catch (Throwable $e) {
+        if (isset($pdo) && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        die("Erro no cadastro completo: " . $e->getMessage());
     }
-
-    veiculo::inserir($veiculo_id, $cor, $placa, $vaga, $marca, $modelo, $tipo_veiculo);
-
-    header("Location: ../view/PainelCliente.php?sucesso=1");
-    exit;
 }
 
-if ($acao == 'cadastrarVeiculo') {
+// ===============================
+// CADASTRAR APENAS VEÍCULO
+// ===============================
+if ($acao === 'cadastrarVeiculo') {
 
-    $id_cliente = $_POST['tipoCliente']; // aqui é o ID do cliente
-    $tipo_veiculo = $_POST['tipoVeiculo'];
-    $cor = $_POST['cor'];
-    $placa = $_POST['placa'];
-    $vaga = $_POST['vaga'];
-    $marca = $_POST['marca'];
-    $modelo = $_POST['modelo'];
+    $id_cliente   = $_POST['tipoCliente'] ?? null;
+    $tipo_veiculo = $_POST['tipoVeiculo'] ?? null;
+    $cor          = $_POST['cor'] ?? null;
+    $placa        = $_POST['placa'] ?? null;
+    $vaga         = $_POST['vaga'] ?? null;
+    $marca        = $_POST['marca'] ?? null;
+    $modelo       = $_POST['modelo'] ?? null;
 
-    // REGRA
-    if ($vaga >= 85 && $vaga <= 90 && $tipoVeiculo != 'moto') {
-        die("Erro: vagas 85–90 são exclusivas para motos.");
+    try {
+        $pdo = (new Conexao())->conexao();
+        $pdo->beginTransaction();
+
+        veiculo::inserir(
+            (int)$vaga,
+            (int)$id_cliente,
+            $placa,
+            $cor,
+            $marca,
+            $modelo,
+            $tipo_veiculo
+        );
+
+        $pdo->commit();
+
+        header("Location: ../view/ViewPainel.php?sucesso=1");
+        exit;
+
+    } catch (Throwable $e) {
+        if (isset($pdo) && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        die("Erro ao cadastrar veículo: " . $e->getMessage());
     }
-
-    veiculo::inserir($id_veiculo, $cor, $placa, $vaga, $marca, $modelo, $tipo_veiculo);
-
-    header("Location: ../view/PainelVeiculo.php?sucesso=1");
-    exit;
 }

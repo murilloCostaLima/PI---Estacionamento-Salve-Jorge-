@@ -65,12 +65,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
             padding: 0.5em 0.8em;
         }
 
-        /* .img-preview {
-            width: 60px;
-            height: 45px;
-            object-fit: cover;
-            border-radius: 4px;
-        } */
     </style>
 </head>
 
@@ -172,6 +166,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                             <small><?= htmlspecialchars($v['cliente_telefone']) ?></small>
                                         </td>
                                         <td>
+                                            <strong><?= ucfirst($v['tipo_veiculo']) ?></strong>
                                             <strong><?= ucfirst($v['modelo']) ?></strong><br>
                                             <small><?= htmlspecialchars($v['cor']) ?></small>
                                         </td>
@@ -189,9 +184,9 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group">
-                                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <!-- <a href="#" class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                </a> -->
                                                 <a href="#" class="btn btn-sm btn-outline-danger"
                                                     onclick="return confirm('Deseja excluir este veículo?')">
                                                     <i class="bi bi-trash"></i>

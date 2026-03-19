@@ -65,12 +65,12 @@ $veiculos = veiculo::listarComFiltros($filtros);
             padding: 0.5em 0.8em;
         }
 
-        .img-preview {
+        /* .img-preview {
             width: 60px;
             height: 45px;
             object-fit: cover;
             border-radius: 4px;
-        }
+        } */
     </style>
 </head>
 
@@ -108,14 +108,14 @@ $veiculos = veiculo::listarComFiltros($filtros);
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="section-title mb-0">Gerenciamento de clientes</h4>
-
             <div class="d-flex gap-2">
-                <button class="btn btn-lg btn-primary px-5">
+                <a href="PainelCliente.php" class="btn btn-lg btn-primary px-5">
                     Cadastrar Cliente
-                </button>
-                <button class="btn btn-lg btn-primary px-5">
+                </a>
+
+                <a href="PainelVeiculo.php" class="btn btn-lg btn-primary px-5">
                     Cadastrar Veículo
-                </button>
+                </a>
             </div>
         </div>
 
@@ -226,8 +226,8 @@ $veiculos = veiculo::listarComFiltros($filtros);
     <!-- FOOTER PADRÃO -->
     <footer>
         <div class="container text-center">
-            <p>Painel administrativo do estacionamento</p>
-            <small>© 2026 Sistema interno</small>
+            <p>Painel administrativo do Estacionamento 'Salve Jorge'</p>
+            <small>© 2026 Tracemys Solutions</small>
         </div>
     </footer>
 

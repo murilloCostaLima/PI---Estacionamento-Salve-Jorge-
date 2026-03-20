@@ -1,13 +1,16 @@
 <?php
+session_start();
 
 require_once("../model/cliente.php");
 
 $clientes = cliente::listar();
 
-$sucesso = $_GET['sucesso'] ?? 0;
+// mensagens vindas do controller
+$sucesso = $_SESSION['success'] ?? null;
+$erro    = $_SESSION['error'] ?? null;
 
-
-
+// limpa mensagens (flash messages)
+unset($_SESSION['success'], $_SESSION['error']);
 ?>
 
 <!DOCTYPE html>
@@ -63,165 +66,122 @@ $sucesso = $_GET['sucesso'] ?? 0;
             justify-content: space-between;
             margin-bottom: 30px;
         }
-
-        .preview-item:hover {
-            border-color: #0d6efd;
-            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.1);
-        }
-
-        .destaque-label {
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: block;
-            margin-bottom: 0;
-        }
-
-        .is-principal {
-            border-color: #0d6efd;
-            background-color: #f0f7ff;
-        }
     </style>
 </head>
 
 <body>
 
-    <!-- NAVBAR PADRÃO -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Painel Cadastro de Veículos</a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="menu">
-            </div>
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">Painel Cadastro de Veículos</a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <div class="form-card">
+
+        <!-- CABEÇALHO -->
+        <div class="card-header-custom">
+            <h4 class="m-0">Novo Cadastro de Veículo</h4>
+            <a href="ViewPainel.php" class="btn btn-lg btn-primary px-5">
+                Voltar para Lista
+            </a>
         </div>
-    </nav>
 
-    <div class="container mt-5">
-        <div class="form-card">
-            
-
-            <div class="card-header-custom">
-                <h4 class="m-0">Novo Cadastro de Veículo</h4>
-                <a href="ViewPainel.php" class="btn btn-lg btn-primary px-5">Voltar para Lista</a>
+        <!-- MENSAGENS -->
+        <?php if ($sucesso): ?>
+            <div class="alert alert-success alert-dismissible fade show">
+                <?= htmlspecialchars($sucesso) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+        <?php endif; ?>
 
-            <?php if ($sucesso == 1): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <strong>Parabéns!</strong> Veículo cadastrado com sucesso.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif ?>
+        <?php if ($erro): ?>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <?= htmlspecialchars($erro) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
 
-            <form id="painelCliente" method="POST" action="../controller/clientectr.php" enctype="multipart/form-data">
-                <!-- INFORMAÇÕES VEÍCULO -->
-                <h5 class="section-title"><i class="bi bi-info-circle me-2"></i>Informações do Veículo</h5>
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Tipo de Veículo</label>
-                        <select name="tipoVeiculo" id="tipoVeiculo" class="form-select" required>
-                            <option value="">Selecione...</option>
-                            <option value="carro">Carro</option>
-                            <option value="moto">Moto</option>
-                            <option value="carro grande">Carro Grande</option>
-                        </select>
-                    </div>
+        <!-- FORM -->
+        <form method="POST" action="../controller/clienteCTR.php">
 
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Cor</label>
-                        <input name="cor" class="form-control">
-                    </div>
+            <input type="hidden" name="acao" value="cadastrarVeiculo">
 
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Placa</label>
-                        <input type="text" name="placa" class="form-control" id="placa"
-                            placeholder="ABC1D23"
-                            maxlength="7"
-                            required>
-                    </div>
+            <h5 class="section-title">
+                <i class="bi bi-car-front-fill me-2"></i>Informações do Veículo
+            </h5>
 
-                    <script>
-                        const placa = document.getElementById('placa');
-
-                        placa.addEventListener('input', function(e) {
-                            let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-                            // limita a 7 caracteres
-                            v = v.slice(0, 7);
-
-                            e.target.value = v;
-                        });
-                    </script>
-
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">Vaga</label>
-                        <input type="number" name="vaga" class="form-control" min="1" max="90" placeholder="Selecione de 1 á 90">
-                    </div>
-
-                    <script>
-                        const tipoVeiculo = document.getElementById('tipoVeiculo');
-                        const vaga = document.querySelector('input[name="vaga"]');
-
-                        function validarVaga() {
-                            const v = parseInt(vaga.value);
-                            const tipo = tipoVeiculo.value;
-
-                            if (v >= 85 && v <= 90 && tipo !== 'moto') {
-                                alert('As vagas de 85 a 90 são exclusivas para motos!');
-                                vaga.value = '';
-                            }
-                        }
-
-                        vaga.addEventListener('input', validarVaga);
-                        tipoVeiculo.addEventListener('change', validarVaga);
-                    </script>
-                    
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Marca</label>
-                        <input name="marca" class="form-control" placeholder="Ex: Toyota">
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Modelo</label>
-                        <input name="modelo" class="form-control" placeholder="Ex: Toyota Corolla">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="form-label">Selecione um Cliente</label>
-                    <select name="tipoCliente" id="tipoCliente" class="form-select" required>
-
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Tipo de Veículo</label>
+                    <select name="tipoVeiculo" id="tipoVeiculo" class="form-select" required>
                         <option value="">Selecione...</option>
-
-                        <?php foreach($clientes as $cliente): ?>
-                        
-                        <option value="<?= $cliente->id ?>"><?= $cliente->nome ?></option>                        
-
-                        <?php endforeach ?>
+                        <option value="carro">Carro</option>
+                        <option value="moto">Moto</option>
+                        <option value="carro grande">Carro Grande</option>
                     </select>
                 </div>
 
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Cor</label>
+                    <input name="cor" class="form-control" required>
                 </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-5 border-top pt-4">
-                    <button type="submit" name="acao" value="cadastrarVeiculo" class="btn btn-lg btn-primary px-5">Cadastrar Veículo</button>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Placa</label>
+                    <input type="text" name="placa" class="form-control" maxlength="7" required>
                 </div>
 
-            </form>
-        </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Vaga</label>
+                    <input type="number" name="vaga" class="form-control" min="1" max="90" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Marca</label>
+                    <input name="marca" class="form-control" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Modelo</label>
+                    <input name="modelo" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Cliente</label>
+                <select name="tipoCliente" class="form-select" required>
+                    <option value="">Selecione...</option>
+                    <?php foreach ($clientes as $cliente): ?>
+                        <option value="<?= $cliente->id ?>">
+                            <?= htmlspecialchars($cliente->nome) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="text-end border-top pt-4">
+                <button type="submit" name="acao" class="btn btn-lg btn-primary px-5">
+                    Cadastrar Veículo
+                </button>
+            </div>
+
+        </form>
     </div>
+</div>
 
-    <!-- FOOTER PADRÃO -->
-    <footer>
-        <div class="container text-center">
-            <p>Painel administrativo do Estacionamento 'Salve Jorge'</p>
-            <small>© 2026 Tracemys Solutions</small>
-        </div>
-    </footer>
+<!-- FOOTER -->
+<footer>
+    <div class="container text-center">
+        <p>Painel administrativo do Estacionamento 'Salve Jorge'</p>
+        <small>© 2026 Tracemys Solutions</small>
+    </div>
+</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

@@ -1,6 +1,6 @@
 <?php
-require_once(__DIR__."/../config/conexao.php");
-require_once(__DIR__."/../config/autoload.php");
+require_once(__DIR__ . "/../config/conexao.php");
+require_once(__DIR__ . "/../config/autoload.php");
 
 class veiculo
 {
@@ -51,7 +51,10 @@ class veiculo
 
     public function __set($prop, $valor)
     {
-        if (property_exists($this, $prop)) { $this->$prop = $valor; return; }
+        if (property_exists($this, $prop)) {
+            $this->$prop = $valor;
+            return;
+        }
         throw new Exception("Propriedade {$prop} não permitida.");
     }
 
@@ -85,7 +88,7 @@ class veiculo
         preg_match("/^enum\((.*)\)$/i", $enum, $matches);
         if (!isset($matches[1])) return [];
 
-        $vals = array_map(function($v){
+        $vals = array_map(function ($v) {
             return trim($v, " '");
         }, explode(',', $matches[1]));
 
@@ -101,30 +104,28 @@ class veiculo
 
     /* ===================== Inserir ===================== */
     public static function inserir(
-    int    $id_vaga,
-    int    $id_cliente,
-    string $placa,
-    string $cor,
-    string $marca,
-    string $modelo,
-    string $tipo_veiculo): int
-    {
+        int    $id_vaga,
+        int    $id_cliente,
+        string $placa,
+        string $cor,
+        string $marca,
+        string $modelo,
+        string $tipo_veiculo
+    ): int {
         $pdo = self::getConexao();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Normalizar placa
         $placa = strtoupper(trim($placa));
 
-        try
-        {
+        try {
             $pdo->beginTransaction();
 
             // Verificar duplicidade de placa
             $stmt = $pdo->prepare("SELECT 1 FROM veiculo WHERE placa = :placa LIMIT 1");
             $stmt->execute([":placa" => $placa]);
 
-            if ($stmt->fetch())
-            {
+            if ($stmt->fetch()) {
                 throw new Exception("Esta placa já está cadastrada. Por favor, utilize outra.");
             }
 
@@ -162,7 +163,8 @@ class veiculo
                 ":cor"     => $cor,
                 ":marca"   => $marca,
                 ":modelo"  => $modelo,
-                ":tipo"    => $tipo_veiculo]);
+                ":tipo"    => $tipo_veiculo
+            ]);
 
             $idVeiculo = (int)$pdo->lastInsertId();
 
@@ -176,9 +178,7 @@ class veiculo
 
             $pdo->commit();
             return $idVeiculo;
-        }
-        catch (Throwable $e)
-        {
+        } catch (Throwable $e) {
             if ($pdo->inTransaction())
                 $pdo->rollBack();
 
@@ -190,8 +190,7 @@ class veiculo
     {
         $pdo = self::getConexao();
 
-        try
-        {
+        try {
             $pdo->beginTransaction();
 
             $dados = $pdo->query("SELECT v.id_vaga, c.tipo_cliente
@@ -205,8 +204,7 @@ class veiculo
             $pdo->prepare("UPDATE veiculo SET hr_saida=NOW()
             WHERE id_veiculo=:id")->execute([":id" => $id_veiculo]);
 
-            if ($dados['tipo_cliente'] !== "Mensal")
-            {
+            if ($dados['tipo_cliente'] !== "Mensal") {
                 $pdo->prepare("
                 UPDATE vaga SET disponibilidade='disponivel'
                 WHERE id_vaga=:vaga")->execute([":vaga" => $dados['id_vaga']]);
@@ -214,9 +212,7 @@ class veiculo
 
             $pdo->commit();
             return true;
-        }
-        catch (Throwable $e)
-        {
+        } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw new Exception("Erro ao registrar saída: {$e->getMessage()}");
         }
@@ -233,8 +229,7 @@ class veiculo
         string $tipo_veiculo,
         ?string $hr_entrada = null,
         ?string $hr_saida = null
-    ): bool
-    {
+    ): bool {
         if (!self::validarTipoVeiculo($tipo_veiculo)) {
             throw new Exception("tipo_veiculo inválido para o ENUM.");
         }
@@ -276,15 +271,13 @@ class veiculo
         $pdo = self::getConexao();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        try
-        {
+        try {
             $pdo->beginTransaction();
 
             $stmtSel = $pdo->prepare("SELECT id_vaga, hr_saida FROM veiculo WHERE id_veiculo = :id FOR UPDATE");
             $stmtSel->execute([":id" => $id_veiculo]);
             $row = $stmtSel->fetch(PDO::FETCH_ASSOC);
-            if (!$row)
-            {
+            if (!$row) {
                 $pdo->rollBack();
                 return false;
             }
@@ -302,17 +295,14 @@ class veiculo
             $apagou = $stmtV->rowCount() > 0;
 
             // Se o veículo ainda estava ocupando a vaga, liberar
-            if ($apagou && $ativa && $id_vaga !== null)
-            {
+            if ($apagou && $ativa && $id_vaga !== null) {
                 $stmtUpd = $pdo->prepare("UPDATE vaga SET disponibilidade = 'disponivel' WHERE id_vaga = :id_vaga");
                 $stmtUpd->execute([":id_vaga" => $id_vaga]);
             }
 
             $pdo->commit();
             return $apagou;
-        }
-        catch (Throwable $e)
-        {
+        } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw new Exception("Falha ao excluir veículo/chave: " . $e->getMessage(), 0, $e);
         }
@@ -364,16 +354,16 @@ class veiculo
         if (!$row) return null;
 
         $veic = new veiculo(
-            id_veiculo:   (int)$row['id_veiculo'],
-            id_vaga:      $row['id_vaga'] !== null ? (int)$row['id_vaga'] : null,
-            id_cliente:   (int)$row['id_cliente'],
-            placa:        $row['placa'],
-            cor:          $row['cor'],
-            marca:        $row['marca'],
-            modelo:       $row['modelo'],
+            id_veiculo: (int)$row['id_veiculo'],
+            id_vaga: $row['id_vaga'] !== null ? (int)$row['id_vaga'] : null,
+            id_cliente: (int)$row['id_cliente'],
+            placa: $row['placa'],
+            cor: $row['cor'],
+            marca: $row['marca'],
+            modelo: $row['modelo'],
             tipo_veiculo: (bool)$row['tipo_veiculo'],
-            hr_entrada:   $row['hr_entrada'],
-            hr_saida:     $row['hr_saida']
+            hr_entrada: $row['hr_entrada'],
+            hr_saida: $row['hr_saida']
         );
 
         // Dados do cliente agregados
@@ -391,7 +381,7 @@ class veiculo
             $veic->vaga = [
                 "id_vaga"        => (int)$row['id_vaga'],
                 "codigo_vaga"    => $row['codigo_vaga'],
-                "disponibilidade"=> $row['disponibilidade']
+                "disponibilidade" => $row['disponibilidade']
             ];
         }
 
@@ -429,23 +419,20 @@ class veiculo
         $params = [];
 
         // 🔍 Busca por placa, nome ou telefone
-        if (!empty($filtros['busca']))
-        {
+        if (!empty($filtros['busca'])) {
             $sql .= " AND (v.placa LIKE :busca OR c.nome
                 LIKE :busca OR c.telefone LIKE :busca)";
             $params[':busca'] = '%' . $filtros['busca'] . '%';
         }
 
         // 🚗 Filtro por tipo de veículo
-        if (!empty($filtros['tipo_veiculo']))
-        {
+        if (!empty($filtros['tipo_veiculo'])) {
             $sql .= " AND v.tipo_veiculo = :tipo_veiculo";
             $params[':tipo_veiculo'] = $filtros['tipo_veiculo'];
         }
 
         // 👤 Filtro por tipo de cliente
-        if (!empty($filtros['tipo_cliente']))
-        {
+        if (!empty($filtros['tipo_cliente'])) {
             $sql .= " AND c.tipo_cliente = :tipo_cliente";
             $params[':tipo_cliente'] = ucfirst(strtolower($filtros['tipo_cliente']));
         }
@@ -458,17 +445,61 @@ class veiculo
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    // NOVO MÉTODO – transacional
+    public static function inserirComPDO(
+        PDO $pdo,
+        int $codigo_vaga,
+        int $id_cliente,
+        string $placa,
+        string $cor,
+        string $marca,
+        string $modelo,
+        string $tipo_veiculo): void
+    {
+
+        // ===== Regras de negócio =====
+        if ($codigo_vaga >= 1 && $codigo_vaga <= 84 && $tipo_veiculo === 'moto') {
+            throw new Exception("Vagas 1 a 84 são permitidas apenas para carros.");
+        }
+
+        if ($codigo_vaga >= 85 && $codigo_vaga <= 90 && $tipo_veiculo !== 'moto') {
+            throw new Exception("Vagas 85 a 90 são exclusivas para motos.");
+        }
+
+        // Buscar vaga disponível
+        $stmt = $pdo->prepare("
+        SELECT id_vaga FROM vaga 
+        WHERE codigo_vaga = :vaga 
+        AND disponibilidade = 'disponivel' FOR UPDATE");
+
+        $stmt->execute([':vaga' => $codigo_vaga]);
+        $id_vaga = $stmt->fetchColumn();
+
+        if (!$id_vaga)
+        {
+            throw new Exception("Vaga não disponível.");
+        }
+
+        // Inserir veículo
+        $stmt = $pdo->prepare("
+        INSERT INTO veiculo (id_vaga, id_cliente, placa, cor, marca, modelo, tipo_veiculo, hr_entrada)
+        VALUES (:vaga, :cliente, :placa, :cor, :marca, :modelo, :tipo, NOW())");
+
+        $stmt->execute([
+            ':vaga'    => $id_vaga,
+            ':cliente' => $id_cliente,
+            ':placa'   => strtoupper($placa),
+            ':cor'     => $cor,
+            ':marca'   => $marca,
+            ':modelo'  => $modelo,
+            ':tipo'    => $tipo_veiculo]);
+
+        // Ocupar vaga
+        $stmt = $pdo->prepare("
+        UPDATE vaga 
+        SET disponibilidade = 'ocupada' 
+        WHERE id_vaga = :vaga");
+
+        $stmt->execute([':vaga' => $id_vaga]);
+    }
 }
-
-// echo "<pre>";
-// try
-// {
-//     print_r(veiculo::inserir(3, 14, "PHMPEHO", "azul", "Toyota", "Toyota Corolla", "carro")); 
-// }
-// catch(Exception $err)
-// {
-//     echo $err->getMessage();
-// }
-
-// inserir(1, 1, "THMLEHO", "azul", "Volkswagen", "Volkswagen Typ 1", "carro")
-// 2, 10, "THMLEHO", "branco", "Toyota", "Toyota Corolla", "carro"

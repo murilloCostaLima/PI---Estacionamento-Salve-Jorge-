@@ -134,10 +134,3 @@ class vaga
         }
     }
 }
-echo "<pre>";
-try{
-    print_r(vaga::listar()); 
-}catch(Exception $err){
-    echo $err->getMessage();
-}
-?>

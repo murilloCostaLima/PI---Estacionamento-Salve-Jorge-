@@ -173,7 +173,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
                 </div>
 
                 <!-- INFORMAÇÕES VEÍCULO -->
-                <h5 class="section-title"><i class="bi bi-info-circle me-2"></i>Informações do Veículo</h5>
+                <h5 class="section-title"><i class="bi bi-car-front-fill me-2"></i>Informações do Veículo</h5>
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Tipo de Veículo</label>
@@ -233,7 +233,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
                         vaga.addEventListener('input', validarVaga);
                         tipoVeiculo.addEventListener('change', validarVaga);
                     </script>
-                    
+
                 </div>
 
                 <div class="row">
@@ -264,7 +264,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
         </div>
     </footer>
 
-    
+
 
 </body>
 

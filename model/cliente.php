@@ -1,6 +1,6 @@
 <?php
-    require_once(__DIR__."/../config/conexao.php");
-    require_once(__DIR__."/../config/autoload.php");
+require_once(__DIR__ . "/../config/conexao.php");
+require_once(__DIR__ . "/../config/autoload.php");
 
 class cliente
 {
@@ -60,8 +60,7 @@ class cliente
 
         $stmt->execute([':telefone' => $telefone]);
 
-        if ($stmt->fetch())
-        {
+        if ($stmt->fetch()) {
             throw new Exception("Este telefone já está cadastrado. Por favor, utilize outro.");
         }
 
@@ -77,12 +76,12 @@ class cliente
             ':telefone'     => $telefone,
             ':endereco'     => $endereco,
             ':bairro'       => $bairro,
-            ':tipo_cliente' => $tipo_cliente]);
+            ':tipo_cliente' => $tipo_cliente
+        ]);
 
         $ultimoID = $pdo->lastInsertId();
 
-        if ($ultimoID <= 0)
-        {
+        if ($ultimoID <= 0) {
             throw new Exception("Não foi possível inserir o cliente.");
         }
 
@@ -98,11 +97,11 @@ class cliente
         $clientes = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $clientes[] = new Cliente(
-                id:           $row['id_cliente'],
-                nome:         $row['nome'],
-                telefone:     $row['telefone'],
-                endereco:     $row['endereco'],
-                bairro:       $row['bairro'],
+                id: $row['id_cliente'],
+                nome: $row['nome'],
+                telefone: $row['telefone'],
+                endereco: $row['endereco'],
+                bairro: $row['bairro'],
                 tipo_cliente: $row['tipo_cliente']
             );
         }
@@ -121,11 +120,11 @@ class cliente
         if (!$row) return null;
 
         return new cliente(
-            id:           $row['id_cliente'],
-            nome:         $row['nome'],
-            telefone:     $row['telefone'],
-            endereco:     $row['endereco'],
-            bairro:       $row['bairro'],
+            id: $row['id_cliente'],
+            nome: $row['nome'],
+            telefone: $row['telefone'],
+            endereco: $row['endereco'],
+            bairro: $row['bairro'],
             tipo_cliente: $row['tipo_cliente']
         );
     }
@@ -158,8 +157,7 @@ class cliente
         $pdo = self::getConexao();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        try
-        {
+        try {
             $pdo->beginTransaction();
 
             // Buscar veículos do cliente
@@ -167,8 +165,7 @@ class cliente
             $stmtV->execute([":id" => $id_cliente]);
             $veiculos = $stmtV->fetchAll(PDO::FETCH_COLUMN);
 
-            foreach ($veiculos as $idVeiculo)
-            {
+            foreach ($veiculos as $idVeiculo) {
                 veiculo::excluir((int)$idVeiculo);
             }
 
@@ -178,21 +175,32 @@ class cliente
 
             $pdo->commit();
             return true;
-
-        }
-
-        catch (Throwable $e)
-        {
+        } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw new Exception("Erro ao excluir cliente: " . $e->getMessage());
         }
     }
+    // NOVO MÉTODO – NÃO substitui o antigo
+    public static function inserirComPDO(
+        PDO $pdo,
+        string $nome,
+        string $telefone,
+        string $endereco,
+        string $bairro,
+        string $tipo_cliente): int
+    {
+        $sql = "
+        INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
+        VALUES (:nome, :telefone, :endereco, :bairro, :tipo)";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':nome'     => $nome,
+            ':telefone' => $telefone,
+            ':endereco' => $endereco,
+            ':bairro'   => $bairro,
+            ':tipo'     => ucfirst(strtolower($tipo_cliente))]);
+
+        return (int)$pdo->lastInsertId();
+    }
 }
-
-// echo "<pre>";
-
-// try{
-//     print_r(cliente::inserir("Paulo Jorge",  "+55 11 18963-3999", "Av. do Contorno, 60", "Itaquera", "Mensal")); 
-// }catch(Exception $err){
-//     echo $err->getMessage();
-// }

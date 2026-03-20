@@ -9,67 +9,82 @@ $acao = $_POST['acao'] ?? '';
 // ===============================
 // CADASTRAR CLIENTE + VEÍCULO
 // ===============================
-if ($acao === 'cadastrarCompleto') {
+session_start();
 
-    // ========= DADOS DO CLIENTE =========
-    $nome         = $_POST['nomeCliente'] ?? null;
-    $telefone     = $_POST['telefone'] ?? null;
-    $tipo_cliente = $_POST['tipoCliente'] ?? null;
-    $bairro       = $_POST['bairro'] ?? null;
-    $endereco     = $_POST['endereco'] ?? null;
+require_once("../config/conexao.php");
+require_once("../model/cliente.php");
+require_once("../model/veiculo.php");
 
-    // ========= DADOS DO VEÍCULO =========
-    $tipo_veiculo = $_POST['tipoVeiculo'] ?? null;
-    $cor          = $_POST['cor'] ?? null;
-    $placa        = $_POST['placa'] ?? null;
-    $vaga         = $_POST['vaga'] ?? null;
-    $marca        = $_POST['marca'] ?? null;
-    $modelo       = $_POST['modelo'] ?? null;
+if ($_POST['acao'] !== 'cadastrarCompleto')
+{
+    header("Location: ../view/PainelCliente.php");
+    exit;
+}
 
-    try {
-        // Conexão e transação
-        $pdo = (new Conexao())->conexao();
-        $pdo->beginTransaction();
+// CLIENTE
+$nome         = $_POST['nomeCliente'];
+$telefone     = $_POST['telefone'];
+$tipo_cliente = $_POST['tipoCliente'];
+$bairro       = $_POST['bairro'];
+$endereco     = $_POST['endereco'];
 
-        // ===== INSERIR CLIENTE =====
-        $id_cliente = cliente::inserir(
-            $nome,
-            $telefone,
-            $endereco,
-            $bairro,
-            $tipo_cliente
-        );
+// VEÍCULO
+$tipo_veiculo = $_POST['tipoVeiculo'];
+$cor          = $_POST['cor'];
+$placa        = $_POST['placa'];
+$vaga         = (int)$_POST['vaga'];
+$marca        = $_POST['marca'];
+$modelo       = $_POST['modelo'];
 
-        // ===== INSERIR VEÍCULO =====
-        veiculo::inserir(
-            (int)$vaga,
-            (int)$id_cliente,
-            $placa,
-            $cor,
-            $marca,
-            $modelo,
-            $tipo_veiculo
-        );
+try
+{
+    $pdo = (new Conexao())->conexao();
+    $pdo->beginTransaction();
 
-        // Confirma tudo
-        $pdo->commit();
+    // ✅ cliente só entra se veículo entrar
+    $id_cliente = cliente::inserirComPDO(
+        $pdo,
+        $nome,
+        $telefone,
+        $endereco,
+        $bairro,
+        $tipo_cliente);
 
-        header("Location: ../view/ViewPainel.php?sucesso=1");
-        exit;
+    veiculo::inserirComPDO(
+        $pdo,
+        $vaga,
+        $id_cliente,
+        $placa,
+        $cor,
+        $marca,
+        $modelo,
+        $tipo_veiculo);
 
-    } catch (Throwable $e) {
-        if (isset($pdo) && $pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+    $pdo->commit();
 
-        die("Erro no cadastro completo: " . $e->getMessage());
+    $_SESSION['success'] = "Cliente e veículo cadastrados com sucesso!";
+    header("Location: ../view/PainelCliente.php");
+    exit;
+
+}
+catch (Throwable $e)
+{
+
+    if ($pdo->inTransaction())
+    {
+        $pdo->rollBack();
     }
+
+    $_SESSION['error'] = $e->getMessage();
+    header("Location: ../view/PainelCliente.php");
+    exit;
 }
 
 // ===============================
 // CADASTRAR APENAS VEÍCULO
 // ===============================
-if ($acao === 'cadastrarVeiculo') {
+if ($acao === 'cadastrarVeiculo')
+{
 
     $id_cliente   = $_POST['tipoCliente'] ?? null;
     $tipo_veiculo = $_POST['tipoVeiculo'] ?? null;
@@ -79,7 +94,8 @@ if ($acao === 'cadastrarVeiculo') {
     $marca        = $_POST['marca'] ?? null;
     $modelo       = $_POST['modelo'] ?? null;
 
-    try {
+    try
+    {
         $pdo = (new Conexao())->conexao();
         $pdo->beginTransaction();
 
@@ -90,19 +106,37 @@ if ($acao === 'cadastrarVeiculo') {
             $cor,
             $marca,
             $modelo,
-            $tipo_veiculo
-        );
+            $tipo_veiculo);
 
         $pdo->commit();
 
         header("Location: ../view/ViewPainel.php?sucesso=1");
         exit;
-
-    } catch (Throwable $e) {
-        if (isset($pdo) && $pdo->inTransaction()) {
+    }
+    catch (Throwable $e)
+    {
+        if (isset($pdo) && $pdo->inTransaction())
+        {
             $pdo->rollBack();
         }
 
         die("Erro ao cadastrar veículo: " . $e->getMessage());
     }
+}
+
+if ($_POST['acao'] == 'editarCompleto')
+{
+
+    veiculo::atualizar(
+        $_POST['id_veiculo'],
+        $_POST['vaga'],
+        $_POST['id_cliente'],
+        $_POST['placa'],
+        $_POST['cor'],
+        $_POST['marca'],
+        $_POST['modelo'],
+        $_POST['tipoVeiculo']);
+
+    header("Location: ../view/ViewPainel.php");
+    exit;
 }

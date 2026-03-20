@@ -64,7 +64,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
             font-weight: 500;
             padding: 0.5em 0.8em;
         }
-
     </style>
 </head>
 
@@ -74,13 +73,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">Painel do Estacionamento</a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="menu">
-                <ul class="navbar-nav ms-auto">
-                </ul>
-            </div>
         </div>
     </nav>
 
@@ -184,10 +176,13 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group">
-                                                <!-- <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <a href="../controller/EditarVeiculo.php?id=<?= $v['id_veiculo'] ?>"
+                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-pencil"></i>
-                                                </a> -->
-                                                <a href="#" class="btn btn-sm btn-outline-danger"
+                                                </a>
+
+                                                <a href="../controller/ExcluirVeiculo.php?id=<?= $v['id_veiculo'] ?>"
+                                                    class="btn btn-sm btn-outline-danger"
                                                     onclick="return confirm('Deseja excluir este veículo?')">
                                                     <i class="bi bi-trash"></i>
                                                 </a>

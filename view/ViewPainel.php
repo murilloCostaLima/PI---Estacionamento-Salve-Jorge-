@@ -14,8 +14,6 @@ $filtros = [
 $veiculos = veiculo::listarComFiltros($filtros);
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -78,18 +76,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
 
     <div class="container mt-5">
 
-        <!--Alerta-->
-        <?php if (isset($_SESSION['mensagem'])): ?>
-            <div class="alert alert-<?= $_SESSION['tipo_alerta'] ?> alert-dismissible fade show" role="alert">
-                <?= $_SESSION['tipo_alerta'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <?php
-            unset($_SESSION['mensagem']);
-            unset($_SESSION['tipo_alerta']);
-            ?>
-        <?php endif ?>
-
         <!-- CABEÇALHO DA PÁGINA -->
 
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -107,6 +93,19 @@ $veiculos = veiculo::listarComFiltros($filtros);
 
 
         <div class="content-card">
+            <!--Alerta-->
+            <?php
+            if (isset($_SESSION['mensagem'], $_SESSION['tipo_alerta']) &&
+                in_array($_SESSION['tipo_alerta'], ['success', 'danger', 'warning', 'info', 'primary', 'secondary', 'dark', 'light'])):
+            ?>
+                <div class="alert alert-<?= $_SESSION['tipo_alerta'] ?> alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($_SESSION['mensagem']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php
+                unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
+            endif;
+            ?>
 
             <!-- FILTROS RÁPIDOS -->
             <form method="GET" action="ViewPainel.php">
@@ -176,10 +175,10 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group">
-                                                <a href="../controller/EditarVeiculo.php?id=<?= $v['id_veiculo'] ?>"
+                                                <!-- <a href="../controller/EditarVeiculo.php?id=<?= $v['id_veiculo'] ?>"
                                                     class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-pencil"></i>
-                                                </a>
+                                                </a> -->
 
                                                 <a href="../controller/ExcluirVeiculo.php?id=<?= $v['id_veiculo'] ?>"
                                                     class="btn btn-sm btn-outline-danger"

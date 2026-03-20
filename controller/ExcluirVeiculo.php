@@ -19,7 +19,7 @@ if ($id) {
         }
 
         $_SESSION['mensagem'] = "Veículo e cliente excluídos com sucesso!";
-        $_SESSION['tipo_alerta'] = "Veículo e cliente excluídos com sucesso!";
+        $_SESSION['tipo_alerta'] = "danger";
 
     } catch (Exception $e) {
         $_SESSION['mensagem'] = $e->getMessage();

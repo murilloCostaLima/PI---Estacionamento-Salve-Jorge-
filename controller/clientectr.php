@@ -15,8 +15,7 @@ require_once("../config/conexao.php");
 require_once("../model/cliente.php");
 require_once("../model/veiculo.php");
 
-if ($_POST['acao'] !== 'cadastrarCompleto')
-{
+if ($_POST['acao'] !== 'cadastrarCompleto') {
     header("Location: ../view/PainelCliente.php");
     exit;
 }
@@ -36,8 +35,7 @@ $vaga         = (int)$_POST['vaga'];
 $marca        = $_POST['marca'];
 $modelo       = $_POST['modelo'];
 
-try
-{
+try {
     $pdo = (new Conexao())->conexao();
     $pdo->beginTransaction();
 
@@ -48,7 +46,8 @@ try
         $telefone,
         $endereco,
         $bairro,
-        $tipo_cliente);
+        $tipo_cliente
+    );
 
     veiculo::inserirComPDO(
         $pdo,
@@ -58,20 +57,17 @@ try
         $cor,
         $marca,
         $modelo,
-        $tipo_veiculo);
+        $tipo_veiculo
+    );
 
     $pdo->commit();
 
     $_SESSION['success'] = "Cliente e veículo cadastrados com sucesso!";
     header("Location: ../view/PainelCliente.php");
     exit;
+} catch (Throwable $e) {
 
-}
-catch (Throwable $e)
-{
-
-    if ($pdo->inTransaction())
-    {
+    if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
@@ -94,21 +90,18 @@ if ($acao === 'cadastrarVeiculo')
     $marca        = $_POST['marca'] ?? null;
     $modelo       = $_POST['modelo'] ?? null;
 
-    try
-    {
+    try {
         $pdo = (new Conexao())->conexao();
         $pdo->beginTransaction();
 
         veiculo::inserir(
             (int)$vaga,
-            (int)$id_cliente,
+           (int)$id_cliente,
             $placa,
             $cor,
             $marca,
             $modelo,
             $tipo_veiculo);
-
-        $pdo->commit();
 
         header("Location: ../view/ViewPainel.php?sucesso=1");
         exit;
@@ -122,21 +115,10 @@ if ($acao === 'cadastrarVeiculo')
 
         die("Erro ao cadastrar veículo: " . $e->getMessage());
     }
-}
+        if (isset($pdo) && $pdo->inTransaction())
+        {
+            $pdo->rollBack();
+        }
 
-if ($_POST['acao'] == 'editarCompleto')
-{
-
-    veiculo::atualizar(
-        $_POST['id_veiculo'],
-        $_POST['vaga'],
-        $_POST['id_cliente'],
-        $_POST['placa'],
-        $_POST['cor'],
-        $_POST['marca'],
-        $_POST['modelo'],
-        $_POST['tipoVeiculo']);
-
-    header("Location: ../view/ViewPainel.php");
-    exit;
+        die("Erro ao cadastrar veículo: " . $e->getMessage());
 }

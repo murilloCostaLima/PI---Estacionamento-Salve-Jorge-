@@ -1,5 +1,13 @@
 <?php
 $sucesso = $_GET['sucesso'] ?? 0;
+
+session_start();
+
+$mensagem    = $_SESSION['mensagem'] ?? null;
+$tipo_alerta = $_SESSION['tipo_alerta'] ?? null;
+
+// limpa após ler
+unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
 ?>
 
 <!DOCTYPE html>
@@ -77,6 +85,13 @@ $sucesso = $_GET['sucesso'] ?? 0;
 
 <body>
 
+    <?php if ($mensagem && $tipo_alerta): ?>
+        <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> alert-dismissible fade show" role="alert">
+            <?= htmlspecialchars($mensagem) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
     <!-- NAVBAR PADRÃO -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -108,7 +123,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
             <form id="painelCliente" method="POST" action="../controller/clientectr.php" enctype="multipart/form-data">
 
                 <!-- INFORMAÇÕES CLIENTE -->
-                <h5 class="section-title"><i class="bi bi-info-circle me-2"></i>Informações do Cliente</h5>
+                <h5 class="section-title"><i class="bi bi-person-circle me-2"></i>Informações do Cliente</h5>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nome do Cliente</label>
@@ -193,7 +208,7 @@ $sucesso = $_GET['sucesso'] ?? 0;
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Placa</label>
                         <input type="text" name="placa" class="form-control" id="placa"
-                            placeholder="ABC1D23"
+                            placeholder="ABCD123"
                             maxlength="7"
                             required>
                     </div>

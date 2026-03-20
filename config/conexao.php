@@ -1,7 +1,7 @@
 <?php
     class Conexao
     {   // variaveis de conexao
-        private $host = '10.91.45.28';       //ip do banco de dados
+        private $host = '10.91.45.29';       //ip do banco de dados
         private $bd   = 'bd_estacionamento'; // Nome do Banco
         private $user = 'admin';             // Usuario
         private $pass = '123456';            //senha de acesso

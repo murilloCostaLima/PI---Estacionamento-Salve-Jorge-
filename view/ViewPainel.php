@@ -95,8 +95,10 @@ $veiculos = veiculo::listarComFiltros($filtros);
         <div class="content-card">
             <!--Alerta-->
             <?php
-            if (isset($_SESSION['mensagem'], $_SESSION['tipo_alerta']) &&
-                in_array($_SESSION['tipo_alerta'], ['success', 'danger', 'warning', 'info', 'primary', 'secondary', 'dark', 'light'])):
+            if (
+                isset($_SESSION['mensagem'], $_SESSION['tipo_alerta']) &&
+                in_array($_SESSION['tipo_alerta'], ['success', 'danger', 'warning', 'info', 'primary', 'secondary', 'dark', 'light'])
+            ):
             ?>
                 <div class="alert alert-<?= $_SESSION['tipo_alerta'] ?> alert-dismissible fade show" role="alert">
                     <?= htmlspecialchars($_SESSION['mensagem']) ?>
@@ -126,6 +128,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
                             <option value="">Todos os tipos de Cliente</option>
                             <option value="mensal">Mensal</option>
                             <option value="avulso">Avulso</option>
+                            <option value="desativado">Desativado</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -140,6 +143,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
                             <tr>
                                 <th>Nome / Telefone</th>
                                 <th>Veículo / Cor</th>
+                                <th>Hora / Data</th>
                                 <th>Vaga</th>
                                 <th>Placa do Veículo</th>
                                 <th>Status do Cliente</th>
@@ -161,24 +165,32 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                             <strong><?= ucfirst($v['modelo']) ?></strong><br>
                                             <small><?= htmlspecialchars($v['cor']) ?></small>
                                         </td>
+                                        <td class="align-middle">
+                                            <?php
+                                            $data = new DateTime($v['hr_entrada']);
+                                            ?>
+                                            <strong><?= $data->format('H:i') ?></strong><br>
+                                            <small class="text-muted"><?= $data->format('d/m/Y') ?></small>
+                                        </td>
                                         <td><?= htmlspecialchars($v['codigo_vaga']) ?></td>
                                         <td><?= htmlspecialchars($v['placa']) ?></td>
                                         <td>
                                             <?php $tipoCliente = $v['tipo_cliente'];
 
-                                            $cores = ['Mensal' => 'primary', 'Avulso' => 'danger'];
+                                            $cores = ['Mensal' => 'primary', 'Avulso' => 'danger', 'Desativado' => 'secondary'];
 
                                             $corBadge = $cores[$tipoCliente] ?? 'secondary'; ?>
                                             <span class="badge bg-<?= $corBadge ?>">
                                                 <?= htmlspecialchars($tipoCliente) ?>
                                             </span>
                                         </td>
+                                        </td>
                                         <td class="text-end">
                                             <div class="btn-group">
-                                                <!-- <a href="../controller/EditarVeiculo.php?id=<?= $v['id_veiculo'] ?>"
+                                                <a href="../controller/EditarVeiculo.php?id=<?= $v['id_veiculo'] ?>"
                                                     class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-pencil"></i>
-                                                </a> -->
+                                                </a>
 
                                                 <a href="../controller/ExcluirVeiculo.php?id=<?= $v['id_veiculo'] ?>"
                                                     class="btn btn-sm btn-outline-danger"

@@ -15,7 +15,7 @@ if ($id) {
             veiculo::excluir((int)$id);
 
             // Excluir cliente relacionado
-            cliente::excluir((int)$veiculo->cliente['id_cliente']);
+            //cliente::excluir((int)$veiculo->cliente['id_cliente']);
         }
 
         $_SESSION['mensagem'] = "Veículo e cliente excluídos com sucesso!";

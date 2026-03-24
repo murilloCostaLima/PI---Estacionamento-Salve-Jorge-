@@ -1,16 +1,23 @@
 <?php
-require_once("../model/cliente.php");
 
 session_start();
+require_once("../model/cliente.php");
 
+// clientes SEMPRE carregam
 $clientes = cliente::listar();
 
-// mensagens vindas do controller
-$sucesso = $_SESSION['success'] ?? null;
-$erro    = $_SESSION['error'] ?? null;
+// por padrão, não mostrar nada
+$sucesso = null;
+$erro    = null;
 
-// limpa mensagens (flash messages)
-unset($_SESSION['success'], $_SESSION['error']);
+// só mostra mensagem se veio do cadastro
+if (isset($_SESSION['flash_from']) && $_SESSION['flash_from'] === 'cadastrarVeiculo') {
+    $sucesso = $_SESSION['success'] ?? null;
+    $erro    = $_SESSION['error'] ?? null;
+}
+
+// sempre limpar flash
+unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
 ?>
 
 <!DOCTYPE html>
@@ -197,7 +204,7 @@ unset($_SESSION['success'], $_SESSION['error']);
                 </div>
 
                 <div class="text-end border-top pt-4">
-                    <button type="submit" name="acao" class="btn btn-lg btn-primary px-5">
+                    <button type="submit" name="acao" value="cadastrarVeiculo" class="btn btn-lg btn-primary px-5">
                         Cadastrar Veículo
                     </button>
                 </div>

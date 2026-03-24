@@ -1,13 +1,37 @@
 <?php
-$sucesso = $_GET['sucesso'] ?? 0;
-
 session_start();
 
-$mensagem    = $_SESSION['mensagem'] ?? null;
-$tipo_alerta = $_SESSION['tipo_alerta'] ?? null;
+// modo edição
+require_once("../model/veiculo.php");
 
-// limpa após ler
-unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
+$modoEdicao = false;
+$veiculoEdicao = null;
+
+// por padrão, não mostrar nada
+$mensagem = null;
+$tipo_alerta = null;
+
+// modo edição
+if (isset($_GET['id'])) {
+    $modoEdicao = true;
+    $veiculoEdicao = veiculo::buscarPorID((int)$_GET['id']);
+
+    if (!$veiculoEdicao) {
+        $_SESSION['error'] = "Registro não encontrado.";
+        header("Location: ViewPainel.php");
+        exit;
+    }
+}
+
+// só mostra mensagem se veio do cadastro cliente+veículo
+if (isset($_SESSION['flash_from']) && $_SESSION['flash_from'] === 'cadastrarCompleto') {
+    $mensagem = $_SESSION['success'] ?? $_SESSION['error'] ?? null;
+    $tipo_alerta = isset($_SESSION['success']) ? 'success' : 'danger';
+}
+
+// sempre limpar flash
+unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
+
 ?>
 
 <!DOCTYPE html>
@@ -85,22 +109,12 @@ unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
 
 <body>
 
-    <?php if ($mensagem && $tipo_alerta): ?>
-        <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> alert-dismissible fade show" role="alert">
-            <?= htmlspecialchars($mensagem) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+
 
     <!-- NAVBAR PADRÃO -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">Painel Cadastro de Clientes</a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="menu">
-            </div>
         </div>
     </nav>
 
@@ -113,12 +127,12 @@ unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
                 <a href="ViewPainel.php" class="btn btn-lg btn-primary px-5">Voltar para Lista</a>
             </div>
 
-            <?php if ($sucesso == 1): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <strong>Parabéns!</strong> Cliente cadastrado com sucesso.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <?php if ($mensagem && $tipo_alerta): ?>
+                <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($mensagem) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            <?php endif ?>
+            <?php endif; ?>
 
             <form id="painelCliente" method="POST" action="../controller/clientectr.php" enctype="multipart/form-data">
 
@@ -167,10 +181,17 @@ unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Tipo de Cliente</label>
-                        <select name="tipoCliente" id="tipoCliente" class="form-select" required>
+                        <select name="tipoCliente" class="form-select" required>
                             <option value="">Selecione...</option>
-                            <option value="mensal">Mensal</option>
-                            <option value="avulso">Avulso</option>
+                            <option value="mensal" <?= ($modoEdicao && $veiculoEdicao->cliente['tipo_cliente'] === 'Mensal') ? 'selected' : '' ?>>Mensal</option>
+                            <option value="avulso" <?= ($modoEdicao && $veiculoEdicao->cliente['tipo_cliente'] === 'Avulso') ? 'selected' : '' ?>>Avulso</option>
+
+                            <?php if ($modoEdicao): ?>
+                                <!-- SOMENTE NA EDIÇÃO -->
+                                <option value="desativado" <?= ($veiculoEdicao->cliente['tipo_cliente'] === 'Desativado') ? 'selected' : '' ?>>
+                                    Desativado
+                                </option>
+                            <?php endif; ?>
                         </select>
                     </div>
                 </div>
@@ -263,9 +284,13 @@ unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-5 border-top pt-4">
-                    <button type="submit" name="acao" value="cadastrarCompleto" class="btn btn-lg btn-primary px-5">Cadastrar Cliente e Veículo</button>
-                </div>
+                <button type="submit"
+                    name="acao"
+                    value="<?= $modoEdicao ? 'editarCompleto' : 'cadastrarCompleto' ?>"
+                    class="btn btn-lg btn-primary px-5">
+
+                    <?= $modoEdicao ? 'Salvar Alterações' : 'Cadastrar Cliente e Veículo' ?>
+                </button>
 
             </form>
         </div>

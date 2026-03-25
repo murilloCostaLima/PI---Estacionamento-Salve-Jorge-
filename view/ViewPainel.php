@@ -143,7 +143,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
                             <tr>
                                 <th>Nome / Telefone</th>
                                 <th>Veículo / Cor</th>
-                                <th>Hora / Data</th>
+                                <th> Hora / Data</th>
                                 <th>Vaga</th>
                                 <th>Placa do Veículo</th>
                                 <th>Status do Cliente</th>
@@ -183,7 +183,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                             <span class="badge bg-<?= $corBadge ?>">
                                                 <?= htmlspecialchars($tipoCliente) ?>
                                             </span>
-                                        </td>
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group">

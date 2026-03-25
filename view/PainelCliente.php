@@ -4,12 +4,16 @@ session_start();
 // modo edição
 require_once("../model/veiculo.php");
 
+$tipoVeiculoVal = $modoEdicao ? ucfirst(strtolower($veiculoEdicao->tipo_veiculo)) : '';
+
 $modoEdicao = false;
 $veiculoEdicao = null;
 
 // por padrão, não mostrar nada
 $mensagem = null;
 $tipo_alerta = null;
+
+
 
 // modo edição
 if (isset($_GET['id'])) {
@@ -31,6 +35,17 @@ if (isset($_SESSION['flash_from']) && $_SESSION['flash_from'] === 'cadastrarComp
 
 // sempre limpar flash
 unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
+
+$nomeVal     = $modoEdicao ? $veiculoEdicao->cliente['nome']     : '';
+$telefoneVal = $modoEdicao ? $veiculoEdicao->cliente['telefone'] : '';
+$bairroVal   = $modoEdicao ? $veiculoEdicao->cliente['bairro']   : '';
+$enderecoVal = $modoEdicao ? $veiculoEdicao->cliente['endereco'] : '';
+
+$placaVal  = $modoEdicao ? $veiculoEdicao->placa  : '';
+$corVal    = $modoEdicao ? $veiculoEdicao->cor    : '';
+$marcaVal  = $modoEdicao ? $veiculoEdicao->marca  : '';
+$modeloVal = $modoEdicao ? $veiculoEdicao->modelo : '';
+$vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codigo_vaga'] : '';
 
 ?>
 
@@ -136,17 +151,26 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
 
             <form id="painelCliente" method="POST" action="../controller/clientectr.php" enctype="multipart/form-data">
 
+                <?php if ($modoEdicao): ?>
+                    <!-- IDs ocultos para edição -->
+                    <input type="hidden" name="id_cliente"
+                        value="<?= (int)$veiculoEdicao->cliente['id_cliente'] ?>">
+
+                    <input type="hidden" name="id_veiculo"
+                        value="<?= (int)$veiculoEdicao->id_veiculo ?>">
+                <?php endif; ?>
+
                 <!-- INFORMAÇÕES CLIENTE -->
                 <h5 class="section-title"><i class="bi bi-person-circle me-2"></i>Informações do Cliente</h5>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nome do Cliente</label>
-                        <input type="text" name="nomeCliente" class="form-control" required>
+                        <input type="text" name="nomeCliente" class="form-control" value="<?= htmlspecialchars($nomeVal) ?>" required>
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Telefone</label>
-                        <input type="tel" name="telefone" class="form-control" id="telefone"
+                        <input type="tel" name="telefone" class="form-control" id="telefone" value="<?= htmlspecialchars($telefoneVal) ?>"
                             placeholder="(00) 00000-0000"
                             pattern="\(\d{2}\)\s\d{5}-\d{4}"
                             maxlength="15"
@@ -199,12 +223,12 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Bairro</label>
-                        <input name="bairro" class="form-control" placeholder="Ex: Av. do Contorno">
+                        <input name="bairro" class="form-control" value="<?= htmlspecialchars($bairroVal) ?>" placeholder="Ex: Av. do Contorno">
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Endereço</label>
-                        <input name="endereco" class="form-control" placeholder="Ex: Av. do Contorno, 60 - Itaquera, São Paulo - SP, 08220-380">
+                        <input name="endereco" class="form-control" value="<?= htmlspecialchars($enderecoVal) ?>" placeholder="Ex: Av. do Contorno, 60 - Itaquera, São Paulo - SP, 08220-380">
                     </div>
                 </div>
 
@@ -213,25 +237,48 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Tipo de Veículo</label>
-                        <select name="tipoVeiculo" id="tipoVeiculo" class="form-select" required>
+                        <select name="tipoVeiculo"
+                            id="tipoVeiculo"
+                            class="form-select"
+                            required
+                            <?= $modoEdicao ? 'disabled' : '' ?>>
+
                             <option value="">Selecione...</option>
-                            <option value="carro">Carro</option>
-                            <option value="moto">Moto</option>
-                            <option value="carro grande">Carro Grande</option>
+
+                            <option value="carro"
+                                <?= ($modoEdicao && $veiculoEdicao->tipo_veiculo === 'carro') ? 'selected' : '' ?>>
+                                Carro
+                            </option>
+
+                            <option value="moto"
+                                <?= ($modoEdicao && $veiculoEdicao->tipo_veiculo === 'moto') ? 'selected' : '' ?>>
+                                Moto
+                            </option>
+
+                            <option value="carro grande"
+                                <?= ($modoEdicao && $veiculoEdicao->tipo_veiculo === 'carro grande') ? 'selected' : '' ?>>
+                                Carro Grande
+                            </option>
                         </select>
+
+                        <?php if ($modoEdicao): ?>
+                            <!-- envia o tipo original mesmo estando 'disabled' -->
+                            <input type="hidden" name="tipoVeiculo"
+                                value="<?= htmlspecialchars($veiculoEdicao->tipo_veiculo) ?>">
+                        <?php endif; ?>
+
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Cor</label>
-                        <input name="cor" class="form-control">
+                        <input name="cor" class="form-control" value="<?= htmlspecialchars($corVal) ?>">
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Placa</label>
-                        <input type="text" name="placa" class="form-control" id="placa"
-                            placeholder="ABCD123"
-                            maxlength="7"
-                            required>
+                        <input type="text" name="placa" class="form-control"
+                            value="<?= htmlspecialchars($placaVal) ?>" <?= $modoEdicao ? 'readonly' : '' ?>
+                            placeholder="ABCD123" maxlength="7" required>
                     </div>
 
                     <script>
@@ -249,7 +296,7 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Vaga</label>
-                        <input type="number" name="vaga" class="form-control" min="1" max="90" placeholder="Selecione de 1 á 90">
+                        <input type="number" name="vaga" class="form-control" value="<?= htmlspecialchars($vagaVal) ?>" min="1" max="90" placeholder="Selecione de 1 á 90">
                     </div>
 
                     <script>
@@ -275,12 +322,12 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Marca</label>
-                        <input name="marca" class="form-control" placeholder="Ex: Toyota">
+                        <input name="marca" class="form-control" value="<?= htmlspecialchars($marcaVal) ?>" placeholder="Ex: Toyota">
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Modelo</label>
-                        <input name="modelo" class="form-control" placeholder="Ex: Toyota Corolla">
+                        <input name="modelo" class="form-control" value="<?= htmlspecialchars($modeloVal) ?>" placeholder="Ex: Toyota Corolla">
                     </div>
                 </div>
 

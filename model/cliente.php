@@ -129,16 +129,18 @@ class cliente
         );
     }
 
+
     public function atualizar()
     {
         $pdo = self::getConexao();
+
         $sql = "UPDATE cliente SET 
-                nome = :nome, 
-                telefone = :telefone, 
-                endereco = :endereco, 
-                bairro = :bairro, 
-                tipo_cliente = :tipo_cliente 
-                WHERE id = :id";
+            nome = :nome, 
+            telefone = :telefone, 
+            endereco = :endereco, 
+            bairro = :bairro, 
+            tipo_cliente = :tipo_cliente 
+            WHERE id_cliente = :id";
 
         $stmt = $pdo->prepare($sql);
 
@@ -151,6 +153,7 @@ class cliente
             ':id'           => $this->id
         ]);
     }
+
 
     public static function excluir(int $id_cliente): bool
     {
@@ -187,8 +190,8 @@ class cliente
         string $telefone,
         string $endereco,
         string $bairro,
-        string $tipo_cliente): int
-    {
+        string $tipo_cliente
+    ): int {
         $sql = "
         INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
         VALUES (:nome, :telefone, :endereco, :bairro, :tipo)";
@@ -199,7 +202,8 @@ class cliente
             ':telefone' => $telefone,
             ':endereco' => $endereco,
             ':bairro'   => $bairro,
-            ':tipo'     => ucfirst(strtolower($tipo_cliente))]);
+            ':tipo'     => ucfirst(strtolower($tipo_cliente))
+        ]);
 
         return (int)$pdo->lastInsertId();
     }

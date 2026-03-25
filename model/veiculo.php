@@ -228,24 +228,27 @@ class veiculo
         string $modelo,
         string $tipo_veiculo,
         ?string $hr_entrada = null,
-        ?string $hr_saida = null
-    ): bool {
+        ?string $hr_saida = null): bool
+        {
+
+        // ✅ NORMALIZA PARA BATER COM O ENUM
+        $tipo_veiculo = ucfirst(strtolower($tipo_veiculo));
+
+
         if (!self::validarTipoVeiculo($tipo_veiculo)) {
             throw new Exception("tipo_veiculo inválido para o ENUM.");
         }
 
         $pdo = self::getConexao();
 
-        $sql = "UPDATE Veiculo SET
-                    id_vaga      = :id_vaga,
-                    id_cliente   = :id_cliente,
-                    placa        = :placa,
-                    cor          = :cor,
-                    marca        = :marca,
-                    modelo       = :modelo,
-                    tipo_veiculo = :tipo_veiculo,
-                    hr_entrada   = :hr_entrada,
-                    hr_saida     = :hr_saida
+        $sql = "UPDATE veiculo SET
+                id_vaga      = :id_vaga,
+                id_cliente   = :id_cliente,
+                placa        = :placa,
+                cor          = :cor,
+                marca        = :marca,
+                modelo       = :modelo,
+                tipo_veiculo = :tipo_veiculo
                 WHERE id_veiculo = :id_veiculo";
 
         $stmt = $pdo->prepare($sql);

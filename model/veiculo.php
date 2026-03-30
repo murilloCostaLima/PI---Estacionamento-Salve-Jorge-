@@ -228,16 +228,16 @@ class veiculo
         string $modelo,
         string $tipo_veiculo,
         ?string $hr_entrada = null,
-        ?string $hr_saida = null): bool
-        {
+        ?string $hr_saida = null
+    ): bool {
 
         // ✅ NORMALIZA PARA BATER COM O ENUM
-        $tipo_veiculo = ucfirst(strtolower($tipo_veiculo));
+        $tipo_veiculo = strtoupper(trim($tipo_veiculo));
 
 
-        if (!self::validarTipoVeiculo($tipo_veiculo)) {
-            throw new Exception("tipo_veiculo inválido para o ENUM.");
-        }
+        // if (!self::validarTipoVeiculo($tipo_veiculo)) {
+        //     throw new Exception("tipo_veiculo inválido para o ENUM.");
+        // }
 
         $pdo = self::getConexao();
 
@@ -248,7 +248,8 @@ class veiculo
                 cor          = :cor,
                 marca        = :marca,
                 modelo       = :modelo,
-                tipo_veiculo = :tipo_veiculo
+                tipo_veiculo = :tipo_veiculo,
+                hr_entrada   = :hr_entrada
                 WHERE id_veiculo = :id_veiculo";
 
         $stmt = $pdo->prepare($sql);
@@ -261,12 +262,44 @@ class veiculo
             ":modelo"       => $modelo,
             ":tipo_veiculo" => $tipo_veiculo,
             ":hr_entrada"   => $hr_entrada,
-            ":hr_saida"     => $hr_saida,
-            ":id_veiculo"   => $id_veiculo
-        ]);
+            ":id_veiculo"   => $id_veiculo]);
 
-        return $stmt->rowCount() > 0;
+        return ($stmt->errorCode() === '00000');
     }
+
+    public static function atualizarComPDO(
+        PDO $pdo,
+        int $id_veiculo,
+        int $id_vaga,
+        int $id_cliente,
+        string $placa,
+        string $cor,
+        string $marca,
+        string $modelo,
+        string $tipo_veiculo): void
+        {
+
+            $stmt = $pdo->prepare("
+            UPDATE veiculo SET
+                id_vaga = :id_vaga,
+                id_cliente = :id_cliente,
+                placa = :placa,
+                cor = :cor,
+                marca = :marca,
+                modelo = :modelo,
+                tipo_veiculo = :tipo
+            WHERE id_veiculo = :id");
+
+        $stmt->execute([
+            ':id_vaga' => $id_vaga,
+            ':id_cliente' => $id_cliente,
+            ':placa' => $placa,
+            ':cor' => $cor,
+            ':marca' => $marca,
+            ':modelo' => $modelo,
+            ':tipo' => strtoupper($tipo_veiculo),
+            ':id' => $id_veiculo]);
+        }
 
     /* ===================== Excluir (somente veículo) ===================== */
     public static function excluir(int $id_veiculo): bool
@@ -364,7 +397,7 @@ class veiculo
             cor: $row['cor'],
             marca: $row['marca'],
             modelo: $row['modelo'],
-            tipo_veiculo: (bool)$row['tipo_veiculo'],
+            tipo_veiculo: $row['tipo_veiculo'],
             hr_entrada: $row['hr_entrada'],
             hr_saida: $row['hr_saida']
         );
@@ -387,6 +420,49 @@ class veiculo
                 "disponibilidade" => $row['disponibilidade']
             ];
         }
+        return $veic;
+    }
+
+    /* ============ Buscar por ID com PDO (veículo + cliente + vaga) ============ */
+    public static function buscarPorIDComPDO(PDO $pdo, int $id_veiculo): ?veiculo
+    {
+        $stmt = $pdo->prepare("
+        SELECT v.*, c.id_cliente, c.nome, c.telefone, c.bairro, c.endereco, c.tipo_cliente,
+        vg.id_vaga, vg.codigo_vaga, vg.disponibilidade FROM veiculo v INNER JOIN cliente c
+        ON c.id_cliente = v.id_cliente LEFT JOIN vaga vg ON vg.id_vaga = v.id_vaga
+        WHERE v.id_veiculo = :id");
+
+        $stmt->execute([':id' => $id_veiculo]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return null;
+
+        $veic = new veiculo(
+            $row['id_veiculo'],
+            $row['id_vaga'],
+            $row['id_cliente'],
+            $row['placa'],
+            $row['cor'],
+            $row['marca'],
+            $row['modelo'],
+            $row['tipo_veiculo'],
+            $row['hr_entrada'],
+            $row['hr_saida']
+        );
+
+        $veic->cliente = [
+            'id_cliente' => $row['id_cliente'],
+            'nome' => $row['nome'],
+            'telefone' => $row['telefone'],
+            'bairro' => $row['bairro'],
+            'endereco' => $row['endereco'],
+            'tipo_cliente' => $row['tipo_cliente']
+        ];
+
+        $veic->vaga = [
+            'id_vaga' => $row['id_vaga'],
+            'codigo_vaga' => $row['codigo_vaga'],
+            'disponibilidade' => $row['disponibilidade']
+        ];
 
         return $veic;
     }

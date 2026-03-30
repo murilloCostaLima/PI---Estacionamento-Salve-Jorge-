@@ -4,16 +4,12 @@ session_start();
 // modo edição
 require_once("../model/veiculo.php");
 
-$tipoVeiculoVal = $modoEdicao ? ucfirst(strtolower($veiculoEdicao->tipo_veiculo)) : '';
-
 $modoEdicao = false;
 $veiculoEdicao = null;
 
 // por padrão, não mostrar nada
 $mensagem = null;
 $tipo_alerta = null;
-
-
 
 // modo edição
 if (isset($_GET['id'])) {
@@ -26,6 +22,8 @@ if (isset($_GET['id'])) {
         exit;
     }
 }
+
+$tipoVeiculoVal = $modoEdicao ? ucfirst(strtolower($veiculoEdicao->tipo_veiculo)) : '';
 
 // só mostra mensagem se veio do cadastro cliente+veículo
 if (isset($_SESSION['flash_from']) && $_SESSION['flash_from'] === 'cadastrarCompleto') {
@@ -245,20 +243,16 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
 
                             <option value="">Selecione...</option>
 
-                            <option value="carro"
-                                <?= ($modoEdicao && $veiculoEdicao->tipo_veiculo === 'carro') ? 'selected' : '' ?>>
+                            <option value="carro" <?= ($modoEdicao && $tipoVeiculoVal === 'Carro') ? 'selected' : '' ?>>
                                 Carro
                             </option>
-
-                            <option value="moto"
-                                <?= ($modoEdicao && $veiculoEdicao->tipo_veiculo === 'moto') ? 'selected' : '' ?>>
+                            <option value="moto" <?= ($modoEdicao && $tipoVeiculoVal === 'Moto') ? 'selected' : '' ?>>
                                 Moto
                             </option>
-
-                            <option value="carro grande"
-                                <?= ($modoEdicao && $veiculoEdicao->tipo_veiculo === 'carro grande') ? 'selected' : '' ?>>
+                            <option value="carro grande" <?= ($modoEdicao && $tipoVeiculoVal === 'Carro grande') ? 'selected' : '' ?>>
                                 Carro Grande
                             </option>
+
                         </select>
 
                         <?php if ($modoEdicao): ?>

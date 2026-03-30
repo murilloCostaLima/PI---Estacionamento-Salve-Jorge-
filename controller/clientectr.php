@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 
 require_once("../config/conexao.php");
@@ -7,8 +6,6 @@ require_once("../model/cliente.php");
 require_once("../model/veiculo.php");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: ../view/ViewPainel.php");
-    exit;
 }
 
 $acao = $_POST['acao'] ?? '';
@@ -64,8 +61,6 @@ if ($acao === 'cadastrarCompleto') {
         header("Location: ../view/PainelCliente.php");
         exit;
     } catch (Throwable $e) {
-
-
 
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -145,7 +140,6 @@ if ($acao === 'cadastrarVeiculo') {
             str_contains($e->getMessage(), 'uk_veiculo_placa')
             || str_contains($e->getMessage(), 'Duplicate entry')
         ) {
-
             $_SESSION['error'] = "Já existe um veículo cadastrado com esta placa.";
         } else {
             $_SESSION['error'] = $e->getMessage();
@@ -157,9 +151,9 @@ if ($acao === 'cadastrarVeiculo') {
     }
 }
 
-// ===============================
-// EDITAR CLIENTE + VEÍCULO
-// ===============================
+/* ========================
+EDITAR CLIENTE + VEÍCULO
+======================== */
 if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
 
     $id_cliente = (int)$_POST['id_cliente'];
@@ -170,14 +164,14 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
         $pdo->beginTransaction();
 
         // Buscar veículo atual
-        $veiculoAtual = veiculo::buscarPorID($id_veiculo);
+        $veiculoAtual = veiculo::buscarPorIDComPDO($pdo, $id_veiculo);
         if (!$veiculoAtual) {
             throw new Exception("Veículo não encontrado.");
         }
 
-        // ===============================
-        // ✅ Atualizar CLIENTE
-        // ===============================
+        /* ================
+        Atualizar CLIENTE
+        =================*/
         $cliente = cliente::buscarPorID($id_cliente);
         if (!$cliente) {
             throw new Exception("Cliente não encontrado.");
@@ -190,49 +184,58 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
         $cliente->tipo_cliente = ucfirst(strtolower($_POST['tipoCliente']));
         $cliente->atualizar();
 
-        // ===============================
-        // ✅ Processar VAGA
-        // ===============================
-        $novaVaga    = (int)$_POST['vaga'];
-        $vagaAtual   = $veiculoAtual->vaga['codigo_vaga'] ?? null;
+        /* ===============================
+        Processar TROCA DE VAGA (CORRETO)
+        =============================== */
 
-        if ($novaVaga !== $vagaAtual) {
+        $codigoVagaNova   = (int)$_POST['vaga'];                        // vaga digitada no formulário
+        $codigoVagaAtual  = $veiculoAtual->vaga['codigo_vaga'] ?? null; // vaga atual do veículo
+        $idVagaAntiga     = $veiculoAtual->id_vaga;                     // PK da vaga antiga
 
-            // liberar vaga antiga
-            $stmt = $pdo->prepare("
-                UPDATE vaga SET disponibilidade = 'disponivel'
-                WHERE codigo_vaga = :vaga
-            ");
-            $stmt->execute([':vaga' => $vagaAtual]);
+        // Só processa se a vaga realmente mudou
+        if ($codigoVagaNova > 0 && $codigoVagaNova !== $codigoVagaAtual) {
+            // LIBERAR VAGA ANTIGA (usa id_vaga)
+            if ($idVagaAntiga) {
+                $stmt = $pdo->prepare("
+                    UPDATE vaga
+                    SET disponibilidade = 'disponivel'
+                    WHERE id_vaga = :id");
 
-            // ocupar nova vaga
+                $stmt->execute([':id' => $idVagaAntiga]);
+            }
+
+            // BUSCAR NOVA VAGA DISPONÍVEL (usa codigo_vaga)
             $stmt = $pdo->prepare("
                 SELECT id_vaga FROM vaga
-                WHERE codigo_vaga = :vaga
-                  AND disponibilidade = 'disponivel'
-                FOR UPDATE
-            ");
-            $stmt->execute([':vaga' => $novaVaga]);
+                WHERE codigo_vaga = :codigo
+                AND disponibilidade = 'disponivel'
+                FOR UPDATE");
+
+            $stmt->execute([':codigo' => $codigoVagaNova]);
             $idVagaNova = $stmt->fetchColumn();
 
             if (!$idVagaNova) {
                 throw new Exception("A nova vaga não está disponível.");
             }
 
+            // ✅ 3. OCUPAR NOVA VAGA (usa id_vaga)
             $stmt = $pdo->prepare("
-                UPDATE vaga SET disponibilidade = 'ocupada'
-                WHERE id_vaga = :id
-            ");
+                UPDATE vaga
+                SET disponibilidade = 'ocupada'
+                WHERE id_vaga = :id");
+
             $stmt->execute([':id' => $idVagaNova]);
         } else {
-            $idVagaNova = $veiculoAtual->id_vaga;
+            // Nenhuma troca de vaga
+            $idVagaNova = $idVagaAntiga;
         }
 
-        // ===============================
-        // ✅ Atualizar VEÍCULO
-        // (placa e tipo são imutáveis)
-        // ===============================
-        veiculo::atualizar(
+        /* =============================
+        Atualizar VEÍCULO
+        (placa e tipo são imutáveis)
+        ============================= */
+        veiculo::atualizarComPDO(
+            $pdo,
             $id_veiculo,
             $idVagaNova,
             $id_cliente,
@@ -240,10 +243,7 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
             $_POST['cor'],
             $_POST['marca'],
             $_POST['modelo'],
-            $veiculoAtual->tipo_veiculo,
-            $veiculoAtual->hr_entrada,
-            $veiculoAtual->hr_saida
-        );
+            $veiculoAtual->tipo_veiculo);
 
         $pdo->commit();
 
@@ -252,7 +252,6 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
         $_SESSION['tipo_alerta'] = "success";
         header("Location: ../view/ViewPainel.php");
         exit;
-
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -264,10 +263,3 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
         exit;
     }
 }
-
-// ===============================
-// AÇÃO INVÁLIDA
-// ===============================
-// $_SESSION['error'] = "Ação inválida.";
-// header("Location: ../view/ViewPainel.php");
-// exit;

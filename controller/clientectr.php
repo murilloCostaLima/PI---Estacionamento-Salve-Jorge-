@@ -184,6 +184,39 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
         $cliente->tipo_cliente = ucfirst(strtolower($_POST['tipoCliente']));
         $cliente->atualizar();
 
+        // Se cliente foi DESATIVADO, liberar todas as vagas ocupadas por ele
+        if ($cliente->tipo_cliente === 'Desativado') {
+
+            // Buscar veículos ATIVOS do cliente
+            $stmt = $pdo->prepare("SELECT id_veiculo, id_vaga FROM veiculo WHERE id_cliente = :id AND hr_saida IS NULL");
+            $stmt->execute([':id' => $id_cliente]);
+            $veiculosAtivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($veiculosAtivos as $v) {
+                // Finaliza o veículo
+                $stmt = $pdo->prepare("UPDATE veiculo SET hr_saida = NOW() WHERE id_veiculo = :id");
+
+                $stmt->execute([':id' => $v['id_veiculo']]);
+
+                // Libera a vaga
+                if ($v['id_vaga']) {
+                    $stmt = $pdo->prepare("UPDATE vaga SET disponibilidade = 'disponivel' WHERE id_vaga = :id");
+                    $stmt->execute([':id' => $v['id_vaga']]);
+                }
+            }
+            // Se cliente foi desativado, NÃO processar vaga nem veículo
+            if ($cliente->tipo_cliente === 'Desativado')
+            {
+                $pdo->commit();
+
+                $_SESSION['mensagem'] = "Cliente desativado e vagas liberadas com sucesso.";
+                $_SESSION['tipo_alerta'] = "success";
+
+                header("Location: ../view/ViewPainel.php");
+                exit;
+            }
+        }
+
         /* ===============================
         Processar TROCA DE VAGA (CORRETO)
         =============================== */
@@ -196,10 +229,7 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
         if ($codigoVagaNova > 0 && $codigoVagaNova !== $codigoVagaAtual) {
             // LIBERAR VAGA ANTIGA (usa id_vaga)
             if ($idVagaAntiga) {
-                $stmt = $pdo->prepare("
-                    UPDATE vaga
-                    SET disponibilidade = 'disponivel'
-                    WHERE id_vaga = :id");
+                $stmt = $pdo->prepare("UPDATE vaga SET disponibilidade = 'disponivel' WHERE id_vaga = :id");
 
                 $stmt->execute([':id' => $idVagaAntiga]);
             }
@@ -219,10 +249,7 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
             }
 
             // ✅ 3. OCUPAR NOVA VAGA (usa id_vaga)
-            $stmt = $pdo->prepare("
-                UPDATE vaga
-                SET disponibilidade = 'ocupada'
-                WHERE id_vaga = :id");
+            $stmt = $pdo->prepare("UPDATE vaga SET disponibilidade = 'ocupada' WHERE id_vaga = :id");
 
             $stmt->execute([':id' => $idVagaNova]);
         } else {
@@ -243,7 +270,8 @@ if (isset($_POST['acao']) && $_POST['acao'] === 'editarCompleto') {
             $_POST['cor'],
             $_POST['marca'],
             $_POST['modelo'],
-            $veiculoAtual->tipo_veiculo);
+            $veiculoAtual->tipo_veiculo
+        );
 
         $pdo->commit();
 

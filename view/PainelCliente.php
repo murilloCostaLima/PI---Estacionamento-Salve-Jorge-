@@ -12,11 +12,13 @@ $mensagem = null;
 $tipo_alerta = null;
 
 // modo edição
-if (isset($_GET['id'])) {
+if (isset($_GET['id']))
+{
     $modoEdicao = true;
     $veiculoEdicao = veiculo::buscarPorID((int)$_GET['id']);
 
-    if (!$veiculoEdicao) {
+    if (!$veiculoEdicao)
+    {
         $_SESSION['error'] = "Registro não encontrado.";
         header("Location: ViewPainel.php");
         exit;
@@ -26,7 +28,8 @@ if (isset($_GET['id'])) {
 $tipoVeiculoVal = $modoEdicao ? ucfirst(strtolower($veiculoEdicao->tipo_veiculo)) : '';
 
 // só mostra mensagem se veio do cadastro cliente+veículo
-if (isset($_SESSION['flash_from']) && $_SESSION['flash_from'] === 'cadastrarCompleto') {
+if (isset($_SESSION['flash_from']) && $_SESSION['flash_from'] === 'cadastrarCompleto')
+{
     $mensagem = $_SESSION['success'] ?? $_SESSION['error'] ?? null;
     $tipo_alerta = isset($_SESSION['success']) ? 'success' : 'danger';
 }
@@ -43,9 +46,7 @@ $placaVal  = $modoEdicao ? $veiculoEdicao->placa  : '';
 $corVal    = $modoEdicao ? $veiculoEdicao->cor    : '';
 $marcaVal  = $modoEdicao ? $veiculoEdicao->marca  : '';
 $modeloVal = $modoEdicao ? $veiculoEdicao->modelo : '';
-$vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codigo_vaga'] : '';
-
-?>
+$vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codigo_vaga'] : '';?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -59,29 +60,34 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
-        body {
+        body
+        {
             background: #f5f6f8;
         }
 
-        .navbar {
+        .navbar
+        {
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
-        .form-card {
+        .form-card
+        {
             background: white;
             border-radius: 10px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
 
-        footer {
+        footer
+        {
             background: #212529;
             color: white;
             padding: 40px 0;
             margin-top: 60px;
         }
 
-        .section-title {
+        .section-title
+        {
             font-weight: 600;
             margin-bottom: 20px;
             color: #333;
@@ -89,31 +95,36 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
             padding-bottom: 10px;
         }
 
-        .form-label {
+        .form-label
+        {
             font-weight: 500;
             color: #555;
         }
 
-        .card-header-custom {
+        .card-header-custom
+        {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 30px;
         }
 
-        .preview-item:hover {
+        .preview-item:hover
+        {
             border-color: #0d6efd;
             box-shadow: 0 4px 8px rgba(13, 110, 253, 0.1);
         }
 
-        .destaque-label {
+        .destaque-label
+        {
             font-size: 0.85rem;
             cursor: pointer;
             display: block;
             margin-bottom: 0;
         }
 
-        .is-principal {
+        .is-principal
+        {
             border-color: #0d6efd;
             background-color: #f0f7ff;
         }
@@ -121,9 +132,6 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
 </head>
 
 <body>
-
-
-
     <!-- NAVBAR PADRÃO -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -178,14 +186,16 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
                     <script>
                         const tel = document.getElementById('telefone');
 
-                        tel.addEventListener('input', function(e) {
+                        tel.addEventListener('input', function(e)
+                        {
                             let v = e.target.value.replace(/\D/g, ''); // remove tudo que não é número
 
                             // limita a 11 dígitos (DDD + número)
                             if (v.length > 11) v = v.slice(0, 11);
 
                             // aplica formato fixo
-                            v = v.replace(/^(\d{0,2})(\d{0,5})(\d{0,4})$/, function(_, ddd, parte1, parte2) {
+                            v = v.replace(/^(\d{0,2})(\d{0,5})(\d{0,4})$/, function(_, ddd, parte1, parte2)
+                            {
                                 let result = '';
 
                                 if (ddd) result += '(' + ddd;
@@ -260,7 +270,6 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
                             <input type="hidden" name="tipoVeiculo"
                                 value="<?= htmlspecialchars($veiculoEdicao->tipo_veiculo) ?>">
                         <?php endif; ?>
-
                     </div>
 
                     <div class="col-md-3 mb-3">
@@ -278,7 +287,8 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
                     <script>
                         const placa = document.getElementById('placa');
 
-                        placa.addEventListener('input', function(e) {
+                        placa.addEventListener('input', function(e)
+                        {
                             let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
                             // limita a 7 caracteres
@@ -297,11 +307,13 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
                         const tipoVeiculo = document.getElementById('tipoVeiculo');
                         const vaga = document.querySelector('input[name="vaga"]');
 
-                        function validarVaga() {
+                        function validarVaga()
+                        {
                             const v = parseInt(vaga.value);
                             const tipo = tipoVeiculo.value;
 
-                            if (v >= 85 && v <= 90 && tipo !== 'moto') {
+                            if (v >= 85 && v <= 90 && tipo !== 'moto')
+                            {
                                 alert('As vagas de 85 a 90 são exclusivas para motos!');
                                 vaga.value = '';
                             }
@@ -332,7 +344,6 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
 
                     <?= $modoEdicao ? 'Salvar Alterações' : 'Cadastrar Cliente e Veículo' ?>
                 </button>
-
             </form>
         </div>
     </div>
@@ -344,9 +355,5 @@ $vagaVal   = ($modoEdicao && $veiculoEdicao->vaga) ? $veiculoEdicao->vaga['codig
             <small>© 2026 Tracemys Solutions</small>
         </div>
     </footer>
-
-
-
 </body>
-
 </html>

@@ -64,6 +64,7 @@ $veiculos = veiculo::listarComFiltros($filtros);
         }
     </style>
 </head>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <body>
 
@@ -98,16 +99,15 @@ $veiculos = veiculo::listarComFiltros($filtros);
             if (
                 isset($_SESSION['mensagem'], $_SESSION['tipo_alerta']) &&
                 in_array($_SESSION['tipo_alerta'], ['success', 'danger', 'warning', 'info', 'primary', 'secondary', 'dark', 'light'])
-            ):
-            ?>
+            ): ?>
+
                 <div class="alert alert-<?= $_SESSION['tipo_alerta'] ?> alert-dismissible fade show" role="alert">
                     <?= htmlspecialchars($_SESSION['mensagem']) ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             <?php
                 unset($_SESSION['mensagem'], $_SESSION['tipo_alerta']);
-            endif;
-            ?>
+            endif; ?>
 
             <!-- FILTROS RÁPIDOS -->
             <form method="GET" action="ViewPainel.php">
@@ -143,8 +143,12 @@ $veiculos = veiculo::listarComFiltros($filtros);
                             <tr>
                                 <th>Nome / Telefone</th>
                                 <th>Veículo / Cor</th>
-                                <th> Hora / Data</th>
-                                <th>Vaga</th>
+                                <th>Entrada (Hora / Data)</th>
+                                <th>
+                                    <?= ($filtros['tipo_cliente'] === 'desativado')
+                                        ? 'Saída (Hora / Data)'
+                                        : 'Vaga' ?>
+                                </th>
                                 <th>Placa do Veículo</th>
                                 <th>Status do Cliente</th>
                                 <th class="text-end">Ações</th>
@@ -167,12 +171,25 @@ $veiculos = veiculo::listarComFiltros($filtros);
                                         </td>
                                         <td class="align-middle">
                                             <?php
-                                            $data = new DateTime($v['hr_entrada']);
-                                            ?>
+                                            if ($v['tipo_cliente'] === 'Desativado' && !empty($v['hr_saida'])) {
+                                                $data = new DateTime($v['hr_saida']);
+                                                $rotulo = 'Saída';
+                                            } else {
+                                                $data = new DateTime($v['hr_entrada']);
+                                                $rotulo = 'Entrada';
+                                            } ?>
                                             <strong><?= $data->format('H:i') ?></strong><br>
                                             <small class="text-muted"><?= $data->format('d/m/Y') ?></small>
                                         </td>
-                                        <td><?= htmlspecialchars($v['codigo_vaga']) ?></td>
+                                        <td class="align-middle">
+                                            <?php if ($v['tipo_cliente'] === 'Desativado' && !empty($v['hr_saida'])): ?>
+                                                <?php $saida = new DateTime($v['hr_saida']); ?>
+                                                <strong><?= $saida->format('H:i') ?></strong><br>
+                                                <small class="text-muted"><?= $saida->format('d/m/Y') ?></small>
+                                            <?php else: ?>
+                                                <?= htmlspecialchars($v['codigo_vaga']) ?>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?= htmlspecialchars($v['placa']) ?></td>
                                         <td>
                                             <?php $tipoCliente = $v['tipo_cliente'];
@@ -219,7 +236,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
                         <li class="page-item"><a class="page-link" href="#">Próximo</a></li>
                     </ul>
                 </nav> -->
-
         </div>
     </div>
 
@@ -230,8 +246,6 @@ $veiculos = veiculo::listarComFiltros($filtros);
             <small>© 2026 Tracemys Solutions</small>
         </div>
     </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

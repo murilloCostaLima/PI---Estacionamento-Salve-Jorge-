@@ -32,7 +32,8 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
-        body {
+        body
+        {
             background: #f5f6f8;
         }
 
@@ -40,21 +41,24 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
-        .form-card {
+        .form-card
+        {
             background: white;
             border-radius: 10px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
 
-        footer {
+        footer
+        {
             background: #212529;
             color: white;
             padding: 40px 0;
             margin-top: 60px;
         }
 
-        .section-title {
+        .section-title
+        {
             font-weight: 600;
             margin-bottom: 20px;
             color: #333;
@@ -62,12 +66,14 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
             padding-bottom: 10px;
         }
 
-        .form-label {
+        .form-label
+        {
             font-weight: 500;
             color: #555;
         }
 
-        .card-header-custom {
+        .card-header-custom
+        {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -75,7 +81,7 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
         }
     </style>
 </head>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <body>
 
     <!-- NAVBAR -->
@@ -136,9 +142,7 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Placa</label>
                         <input type="text" name="placa" class="form-control" id="placa"
-                            placeholder="ABCD123"
-                            maxlength="7"
-                            required>
+                            placeholder="ABCD123" maxlength="7" required>
                     </div>
 
                     <script>
@@ -150,8 +154,7 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                             // limita a 7 caracteres
                             v = v.slice(0, 7);
 
-                            e.target.value = v;
-                        });
+                            e.target.value = v;});
                     </script>
 
                     <div class="col-md-3 mb-3">
@@ -163,11 +166,13 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                         const tipoVeiculo = document.getElementById('tipoVeiculo');
                         const vaga = document.querySelector('input[name="vaga"]');
 
-                        function validarVaga() {
+                        function validarVaga()
+                        {
                             const v = parseInt(vaga.value);
                             const tipo = tipoVeiculo.value;
 
-                            if (v >= 85 && v <= 90 && tipo !== 'moto') {
+                            if (v >= 85 && v <= 90 && tipo !== 'moto')
+                            {
                                 alert('As vagas de 85 a 90 são exclusivas para motos!');
                                 vaga.value = '';
                             }
@@ -202,13 +207,12 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
                         <?php endforeach; ?>
                     </select>
                 </div>
-
+                
                 <div class="text-end border-top pt-4">
                     <button type="submit" name="acao" value="cadastrarVeiculo" class="btn btn-lg btn-primary px-5">
                         Cadastrar Veículo
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
@@ -220,8 +224,5 @@ unset($_SESSION['success'], $_SESSION['error'], $_SESSION['flash_from']);
             <small>© 2026 Tracemys Solutions</small>
         </div>
     </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

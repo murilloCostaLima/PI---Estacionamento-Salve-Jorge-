@@ -37,8 +37,7 @@ class vaga
             $vagas[] = new vaga(
                 id_vaga:        $row['id_vaga'],
                 codigo_vaga:    $row['codigo_vaga'],
-                disponibilidade: $row['disponibilidade']
-            );
+                disponibilidade: $row['disponibilidade']);
         }
         return $vagas;
     }
@@ -60,8 +59,7 @@ class vaga
         return new vaga(
             id_vaga:         $row['id_vaga'],
             codigo_vaga:     $row['codigo_vaga'],
-            disponibilidade: $row['disponibilidade']
-        );
+            disponibilidade: $row['disponibilidade']);
     }
  
     /* =====================================================
@@ -73,7 +71,8 @@ class vaga
         $pdo = self::getConexao();
  
         // Regra: vagas 85–90 apenas motos
-        if ($codigoVaga >= 85 && $codigoVaga <= 90 && $tipoVeiculo !== "moto") {
+        if ($codigoVaga >= 85 && $codigoVaga <= 90 && $tipoVeiculo !== "moto")
+        {
             throw new Exception("As vagas de 85 a 90 são exclusivas para motos.");
         }
  
@@ -83,11 +82,13 @@ class vaga
         $stmt->execute([":cod" => $codigoVaga]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
  
-        if (!$row) {
+        if (!$row)
+        {
             throw new Exception("Vaga não encontrada.");
         }
  
-        if ($row["disponibilidade"] === "ocupada") {
+        if ($row["disponibilidade"] === "ocupada")
+        {
             throw new Exception("A vaga já está ocupada.");
         }
  
@@ -126,10 +127,12 @@ class vaga
     {
         $tipo = strtolower(trim($tipoVeiculo));
 
-        if ($codigoVaga >= 1 && $codigoVaga <= 84 && !in_array($tipo, ["carro", "carro grande"])) {
+        if ($codigoVaga >= 1 && $codigoVaga <= 84 && !in_array($tipo, ["carro", "carro grande"]))
+        {
             throw new Exception("Vagas 1 a 84 são permitidas apenas para carros.");
         }
-        elseif ($codigoVaga >= 85 && $codigoVaga <= 90 && $tipo !== "moto") {
+        elseif ($codigoVaga >= 85 && $codigoVaga <= 90 && $tipo !== "moto")
+        {
             throw new Exception("Vagas 85 a 90 são exclusivas para motos.");
         }
     }

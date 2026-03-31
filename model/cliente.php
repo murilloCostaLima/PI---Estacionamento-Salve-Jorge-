@@ -17,8 +17,8 @@ class cliente
         string $telefone = "",
         string $endereco = "",
         string $bairro = "",
-        string $tipo_cliente = ""
-    ) {
+        string $tipo_cliente = "")
+    {
         $this->id           = $id;
         $this->nome         = $nome;
         $this->telefone     = $telefone;
@@ -30,7 +30,8 @@ class cliente
     // Getters e Setters mágicos simplificados
     public function __get(string $prop)
     {
-        if (property_exists($this, $prop)) {
+        if (property_exists($this, $prop))
+        {
             return $this->$prop;
         }
         throw new Exception("Propriedade {$prop} não existe");
@@ -38,9 +39,12 @@ class cliente
 
     public function __set(string $prop, $valor)
     {
-        if (property_exists($this, $prop)) {
+        if (property_exists($this, $prop))
+        {
             $this->$prop = $valor;
-        } else {
+        }
+        else
+        {
             throw new Exception("Propriedade {$prop} não permitida");
         }
     }
@@ -60,14 +64,13 @@ class cliente
 
         $stmt->execute([':telefone' => $telefone]);
 
-        if ($stmt->fetch()) {
+        if ($stmt->fetch())
+        {
             throw new Exception("Este telefone já está cadastrado. Por favor, utilize outro.");
         }
 
         //Inserir o cliente
-        $sql = "
-            INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
-            VALUES (:nome, :telefone, :endereco, :bairro, :tipo_cliente)";
+        $sql = "INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente) VALUES (:nome, :telefone, :endereco, :bairro, :tipo_cliente)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -76,12 +79,12 @@ class cliente
             ':telefone'     => $telefone,
             ':endereco'     => $endereco,
             ':bairro'       => $bairro,
-            ':tipo_cliente' => $tipo_cliente
-        ]);
+            ':tipo_cliente' => $tipo_cliente]);
 
         $ultimoID = $pdo->lastInsertId();
 
-        if ($ultimoID <= 0) {
+        if ($ultimoID <= 0)
+        {
             throw new Exception("Não foi possível inserir o cliente.");
         }
 
@@ -95,15 +98,15 @@ class cliente
         $stmt = $pdo->query($sql);
 
         $clientes = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC))
+        {
             $clientes[] = new Cliente(
                 id: $row['id_cliente'],
                 nome: $row['nome'],
                 telefone: $row['telefone'],
                 endereco: $row['endereco'],
                 bairro: $row['bairro'],
-                tipo_cliente: $row['tipo_cliente']
-            );
+                tipo_cliente: $row['tipo_cliente']);
         }
         return $clientes;
     }
@@ -125,10 +128,8 @@ class cliente
             telefone: $row['telefone'],
             endereco: $row['endereco'],
             bairro: $row['bairro'],
-            tipo_cliente: $row['tipo_cliente']
-        );
+            tipo_cliente: $row['tipo_cliente']);
     }
-
 
     public function atualizar()
     {
@@ -150,17 +151,36 @@ class cliente
             ':endereco'     => $this->endereco,
             ':bairro'       => $this->bairro,
             ':tipo_cliente' => $this->tipo_cliente,
-            ':id'           => $this->id
-        ]);
+            ':id'           => $this->id]);
     }
 
+    public function atualizarComPDO(PDO $pdo): void
+    {
+        $stmt = $pdo->prepare("
+        UPDATE cliente SET
+            nome = :nome,
+            telefone = :telefone,
+            bairro = :bairro,
+            endereco = :endereco,
+            tipo_cliente = :tipo_cliente
+        WHERE id_cliente = :id");
+
+        $stmt->execute([
+            ':nome' => $this->nome,
+            ':telefone' => $this->telefone,
+            ':bairro' => $this->bairro,
+            ':endereco' => $this->endereco,
+            ':tipo_cliente' => $this->tipo_cliente,
+            ':id' => $this->id_cliente]);
+    }
 
     public static function excluir(int $id_cliente): bool
     {
         $pdo = self::getConexao();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        try {
+        try
+        {
             $pdo->beginTransaction();
 
             // Buscar veículos do cliente
@@ -168,7 +188,8 @@ class cliente
             $stmtV->execute([":id" => $id_cliente]);
             $veiculos = $stmtV->fetchAll(PDO::FETCH_COLUMN);
 
-            foreach ($veiculos as $idVeiculo) {
+            foreach ($veiculos as $idVeiculo)
+            {
                 veiculo::excluir((int)$idVeiculo);
             }
 
@@ -178,23 +199,23 @@ class cliente
 
             $pdo->commit();
             return true;
-        } catch (Throwable $e) {
+        }
+        catch (Throwable $e)
+        {
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw new Exception("Erro ao excluir cliente: " . $e->getMessage());
         }
     }
-    // NOVO MÉTODO – NÃO substitui o antigo
+
     public static function inserirComPDO(
         PDO $pdo,
         string $nome,
         string $telefone,
         string $endereco,
         string $bairro,
-        string $tipo_cliente
-    ): int {
-        $sql = "
-        INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente)
-        VALUES (:nome, :telefone, :endereco, :bairro, :tipo)";
+        string $tipo_cliente): int
+        {
+        $sql = "INSERT INTO cliente (nome, telefone, endereco, bairro, tipo_cliente) VALUES (:nome, :telefone, :endereco, :bairro, :tipo)";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -202,8 +223,7 @@ class cliente
             ':telefone' => $telefone,
             ':endereco' => $endereco,
             ':bairro'   => $bairro,
-            ':tipo'     => ucfirst(strtolower($tipo_cliente))
-        ]);
+            ':tipo'     => ucfirst(strtolower($tipo_cliente))]);
 
         return (int)$pdo->lastInsertId();
     }

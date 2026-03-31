@@ -2,7 +2,8 @@
 
 $id = $_GET['id'] ?? null;
 
-if (!$id) {
+if (!$id)
+{
     header("Location: ../view/ViewPainel.php");
     exit;
 }

@@ -172,10 +172,6 @@ class veiculo
             $stmt = $pdo->prepare("UPDATE vaga SET disponibilidade = 'ocupada' WHERE id_vaga = :vaga");
             $stmt->execute([":vaga" => $id_vaga]);
 
-            // Criar chave automaticamente
-            $stmt = $pdo->prepare("INSERT INTO chave (id_veiculo, id_vaga) VALUES (:v, :g)");
-            $stmt->execute([":v" => $idVeiculo, ":g" => $id_vaga]);
-
             $pdo->commit();
             return $idVeiculo;
         }
@@ -325,10 +321,6 @@ class veiculo
             $id_vaga  = $row['id_vaga'] !== null ? (int)$row['id_vaga'] : null;
             $ativa    = $row['hr_saida'] === null;
 
-            // Exclui chaves vinculadas
-            $stmtC = $pdo->prepare("DELETE FROM chave WHERE id_veiculo = :id");
-            $stmtC->execute([":id" => $id_veiculo]);
-
             // Exclui o veículo
             $stmtV = $pdo->prepare("DELETE FROM veiculo WHERE id_veiculo = :id");
             $stmtV->execute([":id" => $id_veiculo]);
@@ -347,7 +339,7 @@ class veiculo
         catch (Throwable $e)
         {
             if ($pdo->inTransaction()) $pdo->rollBack();
-            throw new Exception("Falha ao excluir veículo/chave: " . $e->getMessage(), 0, $e);
+            throw new Exception("Falha ao excluir veículo: " . $e->getMessage(), 0, $e);
         }
     }
 

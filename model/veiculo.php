@@ -399,8 +399,7 @@ class veiculo
             modelo: $row['modelo'],
             tipo_veiculo: $row['tipo_veiculo'],
             hr_entrada: $row['hr_entrada'],
-            hr_saida: $row['hr_saida']
-        );
+            hr_saida: $row['hr_saida']);
 
         // Dados do cliente agregados
         $veic->cliente = [
@@ -409,16 +408,15 @@ class veiculo
             "nome"         => $row['nome'],
             "telefone"     => $row['telefone'],
             "endereco"     => $row['endereco'],
-            "bairro"       => $row['bairro']
-        ];
+            "bairro"       => $row['bairro']];
 
         // Dados da vaga
-        if (!empty($row['codigo_vaga'])) {
+        if (!empty($row['codigo_vaga']))
+        {
             $veic->vaga = [
                 "id_vaga"        => (int)$row['id_vaga'],
                 "codigo_vaga"    => $row['codigo_vaga'],
-                "disponibilidade" => $row['disponibilidade']
-            ];
+                "disponibilidade" => $row['disponibilidade']];
         }
         return $veic;
     }
@@ -446,8 +444,7 @@ class veiculo
             $row['modelo'],
             $row['tipo_veiculo'],
             $row['hr_entrada'],
-            $row['hr_saida']
-        );
+            $row['hr_saida']);
 
         $veic->cliente = [
             'id_cliente' => $row['id_cliente'],
@@ -455,14 +452,12 @@ class veiculo
             'telefone' => $row['telefone'],
             'bairro' => $row['bairro'],
             'endereco' => $row['endereco'],
-            'tipo_cliente' => $row['tipo_cliente']
-        ];
+            'tipo_cliente' => $row['tipo_cliente']];
 
         $veic->vaga = [
             'id_vaga' => $row['id_vaga'],
             'codigo_vaga' => $row['codigo_vaga'],
-            'disponibilidade' => $row['disponibilidade']
-        ];
+            'disponibilidade' => $row['disponibilidade']];
 
         return $veic;
     }
@@ -485,43 +480,44 @@ class veiculo
         $pdo = self::getConexao();
 
         // SQL base
-        $sql = "SELECT v.*, 
-               c.nome AS cliente_nome,
+        $sql = "SELECT v.*, c.nome AS cliente_nome,
                c.telefone AS cliente_telefone,
                c.tipo_cliente,
-               vg.codigo_vaga
-        FROM veiculo v
+               vg.codigo_vaga FROM veiculo v
         INNER JOIN cliente c ON c.id_cliente = v.id_cliente
-        LEFT JOIN vaga vg ON vg.id_vaga = v.id_vaga
-        WHERE 1 = 1";
+        LEFT JOIN vaga vg ON vg.id_vaga = v.id_vaga WHERE 1 = 1";
 
         $params = [];
 
         // Opção 'desativado' desativada, amenos que entre na opção de editar
         if (
             empty($filtros['tipo_cliente']) ||
-            strtolower($filtros['tipo_cliente']) !== 'desativado'
-        ) {
-            if (empty($filtros['busca'])) {
+            strtolower($filtros['tipo_cliente']) !== 'desativado')
+        {
+            if (empty($filtros['busca']))
+            {
                 $sql .= " AND c.tipo_cliente != 'Desativado'";
             }
         }
 
         // 🔍 Busca por placa, nome ou telefone
-        if (!empty($filtros['busca'])) {
+        if (!empty($filtros['busca']))
+        {
             $sql .= " AND (v.placa LIKE :busca OR c.nome
                 LIKE :busca OR c.telefone LIKE :busca)";
             $params[':busca'] = '%' . $filtros['busca'] . '%';
         }
 
         // Filtro por tipo de veículo
-        if (!empty($filtros['tipo_veiculo'])) {
+        if (!empty($filtros['tipo_veiculo']))
+        {
             $sql .= " AND v.tipo_veiculo = :tipo_veiculo";
             $params[':tipo_veiculo'] = $filtros['tipo_veiculo'];
         }
 
         // 👤 Filtro por tipo de cliente
-        if (!empty($filtros['tipo_cliente'])) {
+        if (!empty($filtros['tipo_cliente']))
+        {
             $sql .= " AND c.tipo_cliente = :tipo_cliente";
             $params[':tipo_cliente'] = ucfirst(strtolower($filtros['tipo_cliente']));
         }
@@ -543,28 +539,29 @@ class veiculo
         string $cor,
         string $marca,
         string $modelo,
-        string $tipo_veiculo
-    ): void {
+        string $tipo_veiculo): void
+    {
 
         // ===== Regras de negócio =====
         // if ($codigo_vaga >= 1 && $codigo_vaga <= 84 && $tipo_veiculo === 'moto') {
         //     throw new Exception("Vagas 1 a 84 são permitidas apenas para carros.");
         // }
 
-        if ($codigo_vaga >= 85 && $codigo_vaga <= 90 && $tipo_veiculo !== 'moto') {
+        if ($codigo_vaga >= 85 && $codigo_vaga <= 90 && $tipo_veiculo !== 'moto')
+        {
             throw new Exception("Vagas 85 a 90 são exclusivas para motos.");
         }
 
         // Buscar vaga disponível
         $stmt = $pdo->prepare("
-        SELECT id_vaga FROM vaga 
-        WHERE codigo_vaga = :vaga 
+        SELECT id_vaga FROM vaga WHERE codigo_vaga = :vaga 
         AND disponibilidade = 'disponivel' FOR UPDATE");
 
         $stmt->execute([':vaga' => $codigo_vaga]);
         $id_vaga = $stmt->fetchColumn();
 
-        if (!$id_vaga) {
+        if (!$id_vaga)
+        {
             throw new Exception("Vaga não disponível.");
         }
 
@@ -580,8 +577,7 @@ class veiculo
             ':cor'     => $cor,
             ':marca'   => $marca,
             ':modelo'  => $modelo,
-            ':tipo'    => $tipo_veiculo
-        ]);
+            ':tipo'    => $tipo_veiculo]);
 
         // Ocupar vaga
         $stmt = $pdo->prepare("
